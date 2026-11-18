@@ -1539,7 +1539,7 @@ function renderRosterAndPresenzeTab() {
             ${foulLogStr}
           </td>
           <td style="color:#cbd5e1;font-size:0.78rem;">
-            <strong>${p.histGoals}</strong> gol · <strong style="color:#fca5a5;">${p.histFouls || 0}</strong> falli <span class="hide-mobile">(${p.histApps} pres.)</span>
+            ${p.isGk ? "—" : `<strong>${p.histGoals}</strong> gol`}
           </td>
           <td class="hide-mobile" style="font-weight:800;color:var(--gold);font-size:0.78rem;">${baseOddStr}</td>
         </tr>
@@ -1576,8 +1576,8 @@ function renderRosterAndPresenzeTab() {
           </div>
           <div class="panel-sub" style="display:flex;flex-direction:column;gap:3px;">
             <div>⚽ <strong>Stagione:</strong> ${p.newSeasonGoals} gol · <strong style="color:#fca5a5;">${p.newSeasonFouls || 0} falli</strong> (${p.newSeasonApps} pres.)</div>
-            <div>📚 <strong>Storico:</strong> ${p.histGoals} gol · <strong style="color:#fca5a5;">${p.histFouls || 0} falli</strong> (${p.histApps} pres.)</div>
-            <div style="font-size:0.72rem;color:var(--text-muted);">🟥 Storico falli gare: ${esc(seasonFoulHistory)}</div>
+            ${!p.isGk ? `<div>📚 <strong>Storico Gol:</strong> ${p.histGoals} gol</div>` : ""}
+            <div style="font-size:0.72rem;color:var(--text-muted);">🟥 Storico falli stagione: ${esc(seasonFoulHistory)}</div>
           </div>
           <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;padding-top:8px;border-top:1px solid var(--border);font-size:0.78rem;">
             ${p.isGk
