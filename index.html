@@ -33,9 +33,6 @@
         <button type="button" class="nav-tab" data-tab="roster" onclick="switchTab('roster')">
           🤽 Girone 6 &amp; Rosa
         </button>
-        <button type="button" class="nav-tab" data-tab="oracle" onclick="switchTab('oracle')">
-          ⚙️ Gestione Partite &amp; Quote
-        </button>
       </nav>
 
       <!-- LOGIN / PROFILO ATTIVO -->
@@ -51,7 +48,7 @@
         <h2>Il Campionato di Scommesse Goliardiche dell'<span>Oppidum Cagliari</span></h2>
         <p>
           Entra con il tuo profilo, ricevi subito <strong>100 Crediti</strong> e sfida tutta la squadra sui pronostici della nuova stagione.
-          Quote generate dall'Intelligenza Artificiale per ogni giornata di campionato, marcatori e scommesse speciali da spogliatoio.
+          Quote generate dall'Intelligenza Artificiale per le sfide di campionato, i marcatori e le scommesse speciali da spogliatoio.
         </p>
         <div class="hero-actions">
           <button type="button" class="btn btn-gold" onclick="openLoginModal()">
@@ -102,9 +99,6 @@
               <h3 class="panel-title">🎯 Palinsesto Partite — Serie C Girone 6</h3>
               <p class="panel-sub">Seleziona un incontro dal menu qui sotto e clicca sulle quote per comporre la tua schedina</p>
             </div>
-            <button type="button" class="btn btn-navy btn-sm" onclick="switchTab('oracle')">
-              ⚙️ Gestisci Partite
-            </button>
           </div>
 
           <div class="match-selector-bar" id="matchSelectorBar"></div>
@@ -144,7 +138,7 @@
               <p class="panel-sub">Ogni iscritto parte con 100 Crediti. Piazzando schedine vincenti accumuli punti per il podio finale.</p>
             </div>
             <button type="button" class="btn btn-gold btn-sm" onclick="openLoginModal()">
-              ➕ Aggiungi / Cambia Giocatore
+              ➕ Accedi / Cambia Giocatore
             </button>
           </div>
 
@@ -158,7 +152,6 @@
                   <th>Bilancio</th>
                   <th>Vinte</th>
                   <th>Perse</th>
-                  <th>Azioni</th>
                 </tr>
               </thead>
               <tbody id="bettorsLeaderboardBody"></tbody>
@@ -170,7 +163,7 @@
           <div class="panel-header">
             <div>
               <h3 class="panel-title">🎫 Storico Schedine Giocate</h3>
-              <p class="panel-sub">Al termine della gara puoi convalidare l'esito cliccando su "Vinta" o "Persa" per aggiornare i saldi.</p>
+              <p class="panel-sub">Elenco delle schedine piazzate dai giocatori della società.</p>
             </div>
           </div>
           <div id="allSlipsHistoryBox"></div>
@@ -178,7 +171,7 @@
       </section>
 
       <!-- ========================================================
-           TAB 3: GIRONE 6, ROSA & PRESENZE
+           TAB 3: GIRONE 6 & ROSA
            ======================================================== -->
       <section class="tab-panel" id="tab-roster">
         <div class="panel-card">
@@ -186,7 +179,7 @@
             <div>
               <h3 class="panel-title">🌊 Classifica Serie C — Girone 6 (C.R. Sardegna)</h3>
               <p class="panel-sub">
-                Le 10 squadre partecipanti al campionato. La classifica si aggiorna in automatico con i risultati inseriti.
+                Le 10 squadre partecipanti al campionato di Serie C — Girone 6.
               </p>
             </div>
           </div>
@@ -223,115 +216,6 @@
           </div>
 
           <div class="roster-grid" id="rosterCardsGrid"></div>
-        </div>
-
-        <div class="panel-card">
-          <div class="panel-header">
-            <div>
-              <h3 class="panel-title">📋 Registro Presenze e Marcatori per Gara</h3>
-              <p class="panel-sub">
-                Seleziona i presenti per ciascuna partita e indica i gol segnati: il calcolo AI aggiornerà automaticamente le quote.
-              </p>
-            </div>
-          </div>
-
-          <div class="table-wrap">
-            <table class="matrix-table">
-              <thead id="presenzeMatrixHead"></thead>
-              <tbody id="presenzeMatrixBody"></tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      <!-- ========================================================
-           TAB 4: CREA PARTITA, GESTIONE QUOTE AI & RISULTATI
-           ======================================================== -->
-      <section class="tab-panel" id="tab-oracle">
-        <div class="panel-card">
-          <div class="panel-header">
-            <div>
-              <h3 class="panel-title">🤖 Aggiungi Nuova Partita e Calcola Quote con l'AI</h3>
-              <p class="panel-sub">
-                Seleziona l'avversaria e il campo di gara per generare automaticamente il tabellone delle quote.
-              </p>
-            </div>
-          </div>
-
-          <form onsubmit="createNewAiMatch(event)">
-            <div class="form-grid">
-              <div class="field">
-                <label for="newMatchOpponent">Squadra Avversaria</label>
-                <select id="newMatchOpponent" onchange="document.getElementById('customOppField').style.display = this.value === 'CUSTOM' ? 'flex' : 'none'">
-                  <option value="R.N. CAGLIARI">R.N. CAGLIARI</option>
-                  <option value="ANACONDA PALLANUOTO">ANACONDA PALLANUOTO</option>
-                  <option value="ANTARES N e PN LATINA">ANTARES N e PN LATINA</option>
-                  <option value="AQUADEMIA">AQUADEMIA</option>
-                  <option value="BABEL">BABEL</option>
-                  <option value="CENTUMCELLAE PALLANUOTO">CENTUMCELLAE PALLANUOTO</option>
-                  <option value="LAZIO PALLANUOTO">LAZIO PALLANUOTO</option>
-                  <option value="VILLA AURELIA S.C.">VILLA AURELIA S.C.</option>
-                  <option value="ZERO9 TEAM">ZERO9 TEAM</option>
-                  <option value="CUSTOM">✨ Altra Squadra...</option>
-                </select>
-              </div>
-
-              <div class="field" id="customOppField" style="display:none;">
-                <label for="newMatchCustomOpponent">Nome Squadra</label>
-                <input type="text" id="newMatchCustomOpponent" placeholder="Inserisci il nome dell'avversaria" />
-              </div>
-
-              <div class="field">
-                <label for="newMatchVenue">Campo di Gara</label>
-                <select id="newMatchVenue">
-                  <option value="home">🏠 In Casa (Piscina Terramaini)</option>
-                  <option value="away">✈️ In Trasferta</option>
-                </select>
-              </div>
-
-              <div class="field">
-                <label for="newMatchDate">Data e Orario</label>
-                <input type="text" id="newMatchDate" placeholder="es. Sabato · Ore 15:00" value="Data da definire" />
-              </div>
-
-              <div class="field">
-                <label for="newMatchComp">Competizione / Giornata</label>
-                <input type="text" id="newMatchComp" value="Serie C — Girone 6" />
-              </div>
-
-              <div class="field">
-                <label for="newMatchBoost">Bilanciamento Quote AI</label>
-                <select id="newMatchBoost">
-                  <option value="1.00">📊 Standard</option>
-                  <option value="1.15" selected>🔥 Fattore Casa (+15%)</option>
-                  <option value="1.30">🚀 Super Fiducia (+30%)</option>
-                </select>
-              </div>
-            </div>
-
-            <button type="submit" class="btn btn-gold">
-              ⚡ Genera Quote AI
-            </button>
-          </form>
-        </div>
-
-        <div class="panel-card">
-          <div class="panel-header">
-            <div>
-              <h3 class="panel-title">📋 Elenco Partite in Palinsesto</h3>
-              <p class="panel-sub">Clicca su "Modifica" per impostare la data di gara, personalizzare le quote o registrare il risultato finale.</p>
-            </div>
-          </div>
-          <div id="oracleMatchesList"></div>
-        </div>
-
-        <div class="panel-card" id="customOddsEditorSection">
-          <div class="panel-header">
-            <div>
-              <h3 class="panel-title">✏️ Modifica Partita, Quote e Risultato</h3>
-            </div>
-          </div>
-          <div id="customOddsEditorBody"></div>
         </div>
       </section>
 

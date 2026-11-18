@@ -1024,9 +1024,6 @@ function renderLeaderboardTab() {
           <td style="color:${net >= 0 ? '#34d399' : '#f87171'};font-weight:800;">${netStr}</td>
           <td style="color:#34d399;font-weight:700;">${u.wins || 0}</td>
           <td style="color:#f87171;font-weight:700;">${u.losses || 0}</td>
-          <td>
-            <button type="button" class="btn btn-outline btn-sm" onclick="giveBonusCredits('${esc(u.id)}', 50)">+50 Cr.</button>
-          </td>
         </tr>
       `;
     }).join("");
