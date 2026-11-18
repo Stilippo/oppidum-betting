@@ -13,6 +13,7 @@ const STORAGE_KEYS = {
   APPEARANCES_REF: "oppidum_season_hist_apps_v8"
 };
 
+const CLOUD_SYNC_URL = "https://api.restful-api.dev/objects/ff808181a09d98f701a1ef0b06e131f8";
 const STARTING_CREDITS = 100;
 
 // ============================================================
@@ -176,6 +177,7 @@ function getUsers() {
 
 function saveUsers(users) {
   localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+  pushSharedStateToCloud();
 }
 
 function getCurrentUser() {
@@ -562,6 +564,7 @@ function getBetSlips() {
 
 function saveBetSlips(slips) {
   localStorage.setItem(STORAGE_KEYS.BETS, JSON.stringify(slips));
+  pushSharedStateToCloud();
 }
 
 function computeGirone6Table() {
@@ -1327,6 +1330,49 @@ function renderRosterAndPresenzeTab() {
   }
 }
 
+// ============================================================
+// 10. SINCRONIZZAZIONE CLOUD CONDIVISA (TUTTI VEDONO TUTTO)
+// ============================================================
+async function pullSharedStateFromCloud() {
+  try {
+    const res = await fetch(CLOUD_SYNC_URL, { cache: "no-store" });
+    if (!res.ok) return;
+    const payload = await res.json();
+    const data = payload?.data;
+    if (!data) return;
+
+    if (Array.isArray(data.users) && data.users.length) {
+      localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(data.users));
+    }
+    if (Array.isArray(data.slips)) {
+      localStorage.setItem(STORAGE_KEYS.BETS, JSON.stringify(data.slips));
+    }
+    renderAuthHeader();
+    renderLeaderboardTab();
+  } catch (e) {
+    // Fallback silenzioso su storage locale se offline
+  }
+}
+
+async function pushSharedStateToCloud() {
+  try {
+    const users = getUsers();
+    const slips = getBetSlips();
+    await fetch(CLOUD_SYNC_URL, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: "oppidum-bet-state",
+        data: {
+          users,
+          slips,
+          updatedAt: new Date().toISOString()
+        }
+      })
+    });
+  } catch (e) {}
+}
+
 // ---------- INIZIALIZZAZIONE ----------
 window.addEventListener("DOMContentLoaded", () => {
   renderAuthHeader();
@@ -1334,4 +1380,7 @@ window.addEventListener("DOMContentLoaded", () => {
   renderBetSlip();
   renderLeaderboardTab();
   renderRosterAndPresenzeTab();
+  pullSharedStateFromCloud();
+  // Aggiorna automaticamente classifica e schedine ogni 20 secondi
+  setInterval(pullSharedStateFromCloud, 20000);
 });
