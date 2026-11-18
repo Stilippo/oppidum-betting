@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>OPPIDUM BET — Girone 6 C.R. Sardegna | Oppidum Sport Cagliari ASD</title>
-  <meta name="description" content="Scommesse goliardiche, quote AI e classifica scommettitori per il Girone 6 C.R. Sardegna dell'Oppidum Sport Cagliari ASD." />
+  <title>OPPIDUM BET — Serie C Girone 6 | Oppidum Sport Cagliari ASD</title>
+  <meta name="description" content="Il portale goliardico di scommesse e pronostici AI per la stagione di Serie C dell'Oppidum Sport Cagliari." />
   <link rel="icon" href="images/logo.png" type="image/png" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
@@ -18,23 +18,23 @@
           <img src="images/logo.png" alt="Logo Oppidum Sport Cagliari" class="brand-logo" />
         </div>
         <div class="brand-text">
-          <h1>OPPIDUM BET <span class="brand-badge">GIRONE 6</span></h1>
-          <div class="brand-sub">Bookmaker Goliardico · Serie C — C.R. Sardegna</div>
+          <h1>OPPIDUM BET <span class="brand-badge">SERIE C</span></h1>
+          <div class="brand-sub">Oppidum Sport Cagliari · Girone 6</div>
         </div>
       </a>
 
       <nav class="nav-tabs" aria-label="Menu principale">
         <button type="button" class="nav-tab active" data-tab="betting" onclick="switchTab('betting')">
-          🎯 Scommesse &amp; Quote AI
+          🎯 Quote &amp; Scommesse
         </button>
         <button type="button" class="nav-tab" data-tab="leaderboard" onclick="switchTab('leaderboard')">
           🏆 Classifica Scommettitori
         </button>
         <button type="button" class="nav-tab" data-tab="roster" onclick="switchTab('roster')">
-          🤽 Girone 6, Rosa &amp; Presenze
+          🤽 Girone 6 &amp; Rosa
         </button>
         <button type="button" class="nav-tab" data-tab="oracle" onclick="switchTab('oracle')">
-          🤖 Crea Partita &amp; Gestione Quote
+          ⚙️ Gestione Partite &amp; Quote
         </button>
       </nav>
 
@@ -47,22 +47,21 @@
   <section class="hero-banner" id="top">
     <div class="hero-card">
       <div>
-        <div class="hero-tag">🔴🔵 Serie C — Girone 6 (C.R. Sardegna) · Calendario in Uscita</div>
-        <h2>Scommetti sul Nuovo <span>Girone 6</span> dell'Oppidum Cagliari</h2>
+        <div class="hero-tag">🔴🔵 Campionato Serie C · Girone 6 (C.R. Sardegna)</div>
+        <h2>Il Campionato di Scommesse Goliardiche dell'<span>Oppidum Cagliari</span></h2>
         <p>
-          Accedi con il tuo nome (senza password complicate): <strong>partiamo tutti con 100 Crediti 🪙</strong>!
-          In attesa dell'uscita del calendario ufficiale, l'Intelligenza Artificiale ha già calcolato le quote contro tutte le
-          <strong>9 avversarie del Girone 6</strong> e dei marcatori della nuova rosa (con <strong>Atzeni</strong>, <strong>Faret</strong>, <strong>Pittotti</strong> e <strong>Olla</strong>).
+          Entra con il tuo profilo, ricevi subito <strong>100 Crediti</strong> e sfida tutta la squadra sui pronostici della nuova stagione.
+          Quote generate dall'Intelligenza Artificiale per ogni giornata di campionato, marcatori e scommesse speciali da spogliatoio.
         </p>
         <div class="hero-actions">
           <button type="button" class="btn btn-gold" onclick="openLoginModal()">
-            🔑 Accedi / Entra con 100 Crediti
+            🔑 Accedi e Gioca
           </button>
           <button type="button" class="btn btn-primary" onclick="switchTab('betting')">
-            🎯 Scommetti sulle Sfide del Girone 6
+            🎯 Vai al Palinsesto
           </button>
           <button type="button" class="btn btn-outline" onclick="switchTab('leaderboard')">
-            🏆 Classifica Scommettitori
+            🏆 Vedi la Classifica
           </button>
         </div>
       </div>
@@ -70,19 +69,19 @@
       <div class="hero-kpis">
         <div class="kpi-box">
           <div class="kpi-val">100 🪙</div>
-          <div class="kpi-lbl">Crediti di partenza uguali per tutti</div>
+          <div class="kpi-lbl">Budget iniziale per ogni giocatore</div>
         </div>
         <div class="kpi-box">
           <div class="kpi-val">Girone 6</div>
-          <div class="kpi-lbl">10 Squadre · C.R. Sardegna / Lazio</div>
-        </div>
-        <div class="kpi-box">
-          <div class="kpi-val">19 Giocatori</div>
-          <div class="kpi-lbl">Con Atzeni, Faret, Pittotti &amp; Olla</div>
+          <div class="kpi-lbl">10 Squadre · C.R. Sardegna</div>
         </div>
         <div class="kpi-box">
           <div class="kpi-val">Quote AI</div>
-          <div class="kpi-lbl">Pronte per tutte le 9 avversarie</div>
+          <div class="kpi-lbl">Calcolate su statistiche e stato di forma</div>
+        </div>
+        <div class="kpi-box">
+          <div class="kpi-val">100% Fun</div>
+          <div class="kpi-lbl">Sfida goliardica tra compagni e amici</div>
         </div>
       </div>
     </div>
@@ -94,17 +93,17 @@
     <div class="workspace-main">
 
       <!-- ========================================================
-           TAB 1: SCOMMESSE & QUOTE AI (GIRONE 6)
+           TAB 1: SCOMMESSE & QUOTE AI
            ======================================================== -->
       <section class="tab-panel active" id="tab-betting">
         <div class="panel-card">
           <div class="panel-header">
             <div>
-              <h3 class="panel-title">🎯 Le 9 Sfide del Girone 6 (C.R. Sardegna) — Quote AI Pronte</h3>
-              <p class="panel-sub">Il calendario ufficiale non è ancora uscito: intanto puoi già scommettere sulle sfide o creare partite personalizzate!</p>
+              <h3 class="panel-title">🎯 Palinsesto Partite — Serie C Girone 6</h3>
+              <p class="panel-sub">Seleziona un incontro dal menu qui sotto e clicca sulle quote per comporre la tua schedina</p>
             </div>
             <button type="button" class="btn btn-navy btn-sm" onclick="switchTab('oracle')">
-              ➕ Imposta Data / Crea Partita
+              ⚙️ Gestisci Partite
             </button>
           </div>
 
@@ -117,13 +116,13 @@
               🔥 Tutte le Quote
             </button>
             <button type="button" class="market-cat-btn" data-cat="main" onclick="setMarketCategory('main')">
-              🤽 1X2, Doppia Chance &amp; Over/Under
+              🤽 Esito 1X2 &amp; Gol Totali
             </button>
             <button type="button" class="market-cat-btn" data-cat="scorers" onclick="setMarketCategory('scorers')">
-              🎯 Marcatori (Rosa Nuova Stagione)
+              🎯 Marcatori
             </button>
             <button type="button" class="market-cat-btn" data-cat="gk" onclick="setMarketCategory('gk')">
-              🧤 Portieri (Atzeni &amp; Faret)
+              🧤 Speciale Portieri
             </button>
             <button type="button" class="market-cat-btn" data-cat="goliardic" onclick="setMarketCategory('goliardic')">
               🍺 Quote Goliardiche
@@ -141,11 +140,11 @@
         <div class="panel-card">
           <div class="panel-header">
             <div>
-              <h3 class="panel-title">🏆 Classifica Scommettitori (Chi ha più Punti / Crediti)</h3>
-              <p class="panel-sub">Tutti partono da 100 Crediti. Chi indovina le schedine scala la classifica della società!</p>
+              <h3 class="panel-title">🏆 Classifica Generale Scommettitori</h3>
+              <p class="panel-sub">Ogni iscritto parte con 100 Crediti. Piazzando schedine vincenti accumuli punti per il podio finale.</p>
             </div>
             <button type="button" class="btn btn-gold btn-sm" onclick="openLoginModal()">
-              ➕ Nuovo Scommettitore / Cambia Profilo
+              ➕ Aggiungi / Cambia Giocatore
             </button>
           </div>
 
@@ -154,12 +153,12 @@
               <thead>
                 <tr>
                   <th>Pos</th>
-                  <th>Scommettitore</th>
-                  <th>Punti / Crediti</th>
+                  <th>Giocatore</th>
+                  <th>Crediti</th>
                   <th>Bilancio</th>
-                  <th>Schedine Vinte</th>
-                  <th>Schedine Perse</th>
-                  <th>Ricarica</th>
+                  <th>Vinte</th>
+                  <th>Perse</th>
+                  <th>Azioni</th>
                 </tr>
               </thead>
               <tbody id="bettorsLeaderboardBody"></tbody>
@@ -170,8 +169,8 @@
         <div class="panel-card">
           <div class="panel-header">
             <div>
-              <h3 class="panel-title">🎫 Tutte le Schedine Giocate</h3>
-              <p class="panel-sub">A fine partita clicca su "✅ Vinta" o "❌ Persa" per aggiornare automaticamente i punti dello scommettitore!</p>
+              <h3 class="panel-title">🎫 Storico Schedine Giocate</h3>
+              <p class="panel-sub">Al termine della gara puoi convalidare l'esito cliccando su "Vinta" o "Persa" per aggiornare i saldi.</p>
             </div>
           </div>
           <div id="allSlipsHistoryBox"></div>
@@ -179,16 +178,15 @@
       </section>
 
       <!-- ========================================================
-           TAB 3: GIRONE 6, ROSA NUOVA STAGIONE & REGISTRO PRESENZE
+           TAB 3: GIRONE 6, ROSA & PRESENZE
            ======================================================== -->
       <section class="tab-panel" id="tab-roster">
         <div class="panel-card">
           <div class="panel-header">
             <div>
-              <h3 class="panel-title">🌊 Girone 6 — C.R. Sardegna (Nuova Stagione)</h3>
+              <h3 class="panel-title">🌊 Classifica Serie C — Girone 6 (C.R. Sardegna)</h3>
               <p class="panel-sub">
-                Le 10 squadre ufficiali del Girone 6 (in attesa dell'uscita del calendario ufficiale).
-                La classifica si aggiornerà automaticamente man mano che referterai i risultati!
+                Le 10 squadre partecipanti al campionato. La classifica si aggiorna in automatico con i risultati inseriti.
               </p>
             </div>
           </div>
@@ -198,7 +196,7 @@
               <thead>
                 <tr>
                   <th>#</th>
-                  <th>Squadra (Girone 6 - C.R. Sardegna)</th>
+                  <th>Squadra</th>
                   <th>Pti</th>
                   <th>G</th>
                   <th>V</th>
@@ -217,9 +215,9 @@
         <div class="panel-card">
           <div class="panel-header">
             <div>
-              <h3 class="panel-title">🤽 Rosa Ufficiale Nuova Stagione (19 Giocatori)</h3>
+              <h3 class="panel-title">🤽 Rosa Oppidum Sport Cagliari</h3>
               <p class="panel-sub">
-                Include i portieri <strong>ATZENI</strong> e <strong>FARET</strong>, <strong>PITTOTTI</strong> e il nuovo innesto <strong>OLLA</strong>.
+                Elenco completo dei giocatori con presenze e reti realizzate nella stagione in corso.
               </p>
             </div>
           </div>
@@ -230,10 +228,9 @@
         <div class="panel-card">
           <div class="panel-header">
             <div>
-              <h3 class="panel-title">📋 Registro Presenze &amp; Gol per Partita (Girone 6)</h3>
+              <h3 class="panel-title">📋 Registro Presenze e Marcatori per Gara</h3>
               <p class="panel-sub">
-                Spunta quali giocatori hanno giocato (o sono convocati) in ogni partita e inserisci i gol segnati:
-                le quote AI dei marcatori si aggiornano automaticamente sui giocatori presenti!
+                Seleziona i presenti per ciascuna partita e indica i gol segnati: il calcolo AI aggiornerà automaticamente le quote.
               </p>
             </div>
           </div>
@@ -254,9 +251,9 @@
         <div class="panel-card">
           <div class="panel-header">
             <div>
-              <h3 class="panel-title">🤖 Crea Nuova Partita Futura (Calcolo Quote AI)</h3>
+              <h3 class="panel-title">🤖 Aggiungi Nuova Partita e Calcola Quote con l'AI</h3>
               <p class="panel-sub">
-                Scegli una delle 9 avversarie ufficiali del Girone 6 (o un'amichevole): l'AI calcola subito tutte le quote!
+                Seleziona l'avversaria e il campo di gara per generare automaticamente il tabellone delle quote.
               </p>
             </div>
           </div>
@@ -264,7 +261,7 @@
           <form onsubmit="createNewAiMatch(event)">
             <div class="form-grid">
               <div class="field">
-                <label for="newMatchOpponent">Avversaria Girone 6 (C.R. Sardegna)</label>
+                <label for="newMatchOpponent">Squadra Avversaria</label>
                 <select id="newMatchOpponent" onchange="document.getElementById('customOppField').style.display = this.value === 'CUSTOM' ? 'flex' : 'none'">
                   <option value="R.N. CAGLIARI">R.N. CAGLIARI</option>
                   <option value="ANACONDA PALLANUOTO">ANACONDA PALLANUOTO</option>
@@ -275,17 +272,17 @@
                   <option value="LAZIO PALLANUOTO">LAZIO PALLANUOTO</option>
                   <option value="VILLA AURELIA S.C.">VILLA AURELIA S.C.</option>
                   <option value="ZERO9 TEAM">ZERO9 TEAM</option>
-                  <option value="CUSTOM">✨ Altro Avversario / Amichevole...</option>
+                  <option value="CUSTOM">✨ Altra Squadra...</option>
                 </select>
               </div>
 
               <div class="field" id="customOppField" style="display:none;">
-                <label for="newMatchCustomOpponent">Nome Avversario</label>
-                <input type="text" id="newMatchCustomOpponent" placeholder="Nome squadra avversaria" />
+                <label for="newMatchCustomOpponent">Nome Squadra</label>
+                <input type="text" id="newMatchCustomOpponent" placeholder="Inserisci il nome dell'avversaria" />
               </div>
 
               <div class="field">
-                <label for="newMatchVenue">Casa / Trasferta</label>
+                <label for="newMatchVenue">Campo di Gara</label>
                 <select id="newMatchVenue">
                   <option value="home">🏠 In Casa (Piscina Terramaini)</option>
                   <option value="away">✈️ In Trasferta</option>
@@ -293,27 +290,27 @@
               </div>
 
               <div class="field">
-                <label for="newMatchDate">Data e Ora (o "Calendario in uscita")</label>
-                <input type="text" id="newMatchDate" placeholder="es. 1ª Giornata · Sabato Ore 15:00" value="Calendario da definire" />
+                <label for="newMatchDate">Data e Orario</label>
+                <input type="text" id="newMatchDate" placeholder="es. Sabato · Ore 15:00" value="Data da definire" />
               </div>
 
               <div class="field">
-                <label for="newMatchComp">Giornata / Torneo</label>
-                <input type="text" id="newMatchComp" value="Girone 6 — C.R. Sardegna" />
+                <label for="newMatchComp">Competizione / Giornata</label>
+                <input type="text" id="newMatchComp" value="Serie C — Girone 6" />
               </div>
 
               <div class="field">
-                <label for="newMatchBoost">Fiducia AI Oppidum</label>
+                <label for="newMatchBoost">Bilanciamento Quote AI</label>
                 <select id="newMatchBoost">
-                  <option value="1.00">📊 Equilibrata</option>
-                  <option value="1.15" selected>🔥 Fattore Terramaini (+15%)</option>
-                  <option value="1.30">🚀 Super Forma Oppidum (+30%)</option>
+                  <option value="1.00">📊 Standard</option>
+                  <option value="1.15" selected>🔥 Fattore Casa (+15%)</option>
+                  <option value="1.30">🚀 Super Fiducia (+30%)</option>
                 </select>
               </div>
             </div>
 
             <button type="submit" class="btn btn-gold">
-              ⚡ Genera Quote AI per la Partita
+              ⚡ Genera Quote AI
             </button>
           </form>
         </div>
@@ -321,8 +318,8 @@
         <div class="panel-card">
           <div class="panel-header">
             <div>
-              <h3 class="panel-title">📋 Le Partite del Girone 6 nel Palinsesto</h3>
-              <p class="panel-sub">Appena esce il calendario ufficiale puoi inserire la data esatta, modificare le quote o refertare il risultato finale</p>
+              <h3 class="panel-title">📋 Elenco Partite in Palinsesto</h3>
+              <p class="panel-sub">Clicca su "Modifica" per impostare la data di gara, personalizzare le quote o registrare il risultato finale.</p>
             </div>
           </div>
           <div id="oracleMatchesList"></div>
@@ -331,7 +328,7 @@
         <div class="panel-card" id="customOddsEditorSection">
           <div class="panel-header">
             <div>
-              <h3 class="panel-title">✏️ Imposta Data Calendario / Modifica Quote / Referta Risultato</h3>
+              <h3 class="panel-title">✏️ Modifica Partita, Quote e Risultato</h3>
             </div>
           </div>
           <div id="customOddsEditorBody"></div>
@@ -353,23 +350,23 @@
 
   </main>
 
-  <!-- MODAL DI LOGIN SEMPLICE (SENZA PASSWORD COMPLICATE) -->
+  <!-- MODAL DI LOGIN SEMPLICE -->
   <div class="modal-backdrop" id="loginModal" onclick="if(event.target===this) closeLoginModal()">
     <div class="modal-card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-        <h3 style="font-family:'Space Grotesk',sans-serif;font-size:1.25rem;">🔑 Accesso Scommettitore</h3>
+        <h3 style="font-family:'Space Grotesk',sans-serif;font-size:1.25rem;">🔑 Accedi a Oppidum Bet</h3>
         <button type="button" class="bs-remove" onclick="closeLoginModal()" style="font-size:1.2rem;">✕</button>
       </div>
       <p class="panel-sub" style="margin-bottom:14px;">
-        Inserisci il tuo nome o soprannome per entrare. Se è la tua prima volta, parti subito con <strong>100 Crediti 🪙</strong>!
+        Inserisci il tuo nome o soprannome per accedere. I nuovi giocatori ricevono subito <strong>100 Crediti 🪙</strong>.
       </p>
       <form onsubmit="handleSimpleLogin(event)" style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px;">
         <div class="field">
-          <label for="loginUsernameInput">Il tuo Nome o Soprannome</label>
-          <input type="text" id="loginUsernameInput" placeholder="es. Filippo, Melis, Atzeni, Olla..." required />
+          <label for="loginUsernameInput">Nome o Nickname</label>
+          <input type="text" id="loginUsernameInput" placeholder="Inserisci il tuo nome..." required />
         </div>
         <button type="submit" class="btn btn-gold btn-block">
-          🚀 Entra e Gioca (100 Crediti)
+          🚀 Entra nel Gioco
         </button>
       </form>
       <div id="existingUsersQuickList"></div>
@@ -382,10 +379,10 @@
   <!-- FOOTER -->
   <footer>
     <p>
-      <strong>OPPIDUM BET</strong> — Serie C Girone 6 (C.R. Sardegna) · <strong>Oppidum Sport Cagliari ASD</strong>
+      <strong>OPPIDUM BET</strong> · <strong>Oppidum Sport Cagliari ASD</strong> — Serie C Girone 6 (C.R. Sardegna)
     </p>
     <p style="margin-top:6px;">
-      ⚠️ Gioco goliardico gratuito tra compagni di squadra con crediti virtuali (🪙). Nessun denaro reale coinvolto.
+      ⚠️ Gioco goliardico gratuito riservato alla squadra con crediti virtuali. Nessun denaro reale coinvolto.
     </p>
   </footer>
 

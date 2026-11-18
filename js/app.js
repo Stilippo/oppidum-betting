@@ -9,11 +9,11 @@
    ============================================================ */
 
 const STORAGE_KEYS = {
-  USERS: "oppidum_girone6_users_v1",
-  CURRENT_USER: "oppidum_girone6_current_user_v1",
-  BETS: "oppidum_girone6_bets_v1",
-  MATCHES: "oppidum_girone6_matches_v1",
-  APPEARANCES_REF: "oppidum_girone6_hist_apps_v1"
+  USERS: "oppidum_girone6_users_v2",
+  CURRENT_USER: "oppidum_girone6_current_user_v2",
+  BETS: "oppidum_girone6_bets_v2",
+  MATCHES: "oppidum_girone6_matches_v2",
+  APPEARANCES_REF: "oppidum_girone6_hist_apps_v2"
 };
 
 const STARTING_CREDITS = 100;
@@ -38,22 +38,22 @@ const HISTORICAL_AI_REFERENCE = {
   // Parametri di forza stimati dall'AI (combinando i dati reali della scorsa
   // stagione per chi c'era già + rating Serie C per le nuove del Girone 6)
   teamsStrength: {
-    "R.N. CAGLIARI":           { gf: 214, ga: 162, note: "Derby Cagliaritano · Precedenti 2026: 6-13 e 8-11" },
-    "ANACONDA PALLANUOTO":     { gf: 204, ga: 210, note: "Precedenti 2026: 9-11 in casa e 13-13 in trasferta!" },
-    "LAZIO PALLANUOTO":        { gf: 225, ga: 185, note: "Tradizione storica laziale · Trasferta ostica a Roma" },
-    "CENTUMCELLAE PALLANUOTO": { gf: 218, ga: 190, note: "Scuola Civitavecchia · Squadra fisica e veloce" },
-    "ZERO9 TEAM":              { gf: 210, ga: 195, note: "Club romano molto organizzato sui ritmi alti" },
-    "VILLA AURELIA S.C.":      { gf: 202, ga: 198, note: "Sfida equilibrata contro i romani del Villa Aurelia" },
-    "ANTARES N e PN LATINA":   { gf: 198, ga: 205, note: "Trasferta pontina a Latina · Match combattuto" },
-    "BABEL":                   { gf: 195, ga: 208, note: "Sfida aperta contro il Babel Roma" },
-    "AQUADEMIA":               { gf: 190, ga: 212, note: "Compagine laziale alla portata della banda di Terramaini" },
-    "OPPIDUM SPORT CAGLIARI":  { gf: 149, ga: 247, note: "La nostra squadra · Piscina Terramaini Cagliari" }
+    "R.N. CAGLIARI":           { gf: 214, ga: 162, note: "Derby cittadino di Cagliari · Sfida ad alta intensità" },
+    "ANACONDA PALLANUOTO":     { gf: 204, ga: 210, note: "Sfida equilibrata e spettacolare del girone" },
+    "LAZIO PALLANUOTO":        { gf: 225, ga: 185, note: "Formazione capitolina storica e organizzata" },
+    "CENTUMCELLAE PALLANUOTO": { gf: 218, ga: 190, note: "Compagine di Civitavecchia solida e veloce" },
+    "ZERO9 TEAM":              { gf: 210, ga: 195, note: "Squadra romana dai ritmi elevati" },
+    "VILLA AURELIA S.C.":      { gf: 202, ga: 198, note: "Incontro combattuto su ogni pallone" },
+    "ANTARES N e PN LATINA":   { gf: 198, ga: 205, note: "Sfida ostica contro la formazione di Latina" },
+    "BABEL":                   { gf: 195, ga: 208, note: "Partita aperta contro il club romano" },
+    "AQUADEMIA":               { gf: 190, ga: 212, note: "Match importante per muovere la classifica" },
+    "OPPIDUM SPORT CAGLIARI":  { gf: 149, ga: 247, note: "Oppidum Sport Cagliari · Piscina Terramaini" }
   },
   // Rosa Ufficiale Nuova Stagione (19 giocatori: 2 portieri + 17 movimento)
   roster: [
     { id: "atzeni",     name: "ATZENI",     role: "Portiere",    isGk: true,  histGoals: 0,  histApps: 18, note: "Portiere" },
     { id: "faret",      name: "FARET",      role: "Portiere",    isGk: true,  histGoals: 0,  histApps: 18, note: "Portiere" },
-    { id: "melis",      name: "MELIS",      role: "Attaccante",  isGk: false, histGoals: 34, histApps: 18, note: "Bomber" },
+    { id: "melis",      name: "MELIS",      role: "Attaccante",  isGk: false, histGoals: 34, histApps: 18, note: "Attaccante" },
     { id: "piras",      name: "PIRAS",      role: "Centrovasca", isGk: false, histGoals: 24, histApps: 18, note: "Attaccante / Centrovasca" },
     { id: "de_giudici", name: "DE GIUDICI", role: "Universale",  isGk: false, histGoals: 18, histApps: 16, note: "Attaccante / Universale" },
     { id: "sacco",      name: "SACCO",      role: "Centrovasca", isGk: false, histGoals: 12, histApps: 16, note: "Centrovasca / Difensore" },
@@ -68,8 +68,8 @@ const HISTORICAL_AI_REFERENCE = {
     { id: "morzetti",   name: "MORZETTI",   role: "Universale",  isGk: false, histGoals: 0,  histApps: 8,  note: "Universale" },
     { id: "murtas",     name: "MURTAS",     role: "Universale",  isGk: false, histGoals: 0,  histApps: 8,  note: "Universale" },
     { id: "orru",       name: "ORRU'",      role: "Universale",  isGk: false, histGoals: 0,  histApps: 8,  note: "Universale" },
-    { id: "pittotti",   name: "PITTOTTI",   role: "Universale",  isGk: false, histGoals: 0,  histApps: 1,  note: "1 presenza scorsa stagione" },
-    { id: "olla",       name: "OLLA",       role: "Nuovo Innesto", isGk: false, histGoals: 0, histApps: 0,  note: "Nuovo acquisto questa stagione" }
+    { id: "pittotti",   name: "PITTOTTI",   role: "Universale",  isGk: false, histGoals: 0,  histApps: 1,  note: "Universale" },
+    { id: "olla",       name: "OLLA",       role: "Universale",  isGk: false, histGoals: 0,  histApps: 0,  note: "Universale" }
   ]
 };
 
@@ -701,8 +701,8 @@ function renderMarketsForMatch(match) {
     html += `
       <div class="market-block">
         <div class="market-block-header">
-          <div class="market-block-title">🎯 Quote Marcatori Oppidum (Rosa Attiva)</div>
-          <span class="market-badge">Inclusi Pittotti e Olla</span>
+          <div class="market-block-title">🎯 Quote Marcatori Oppidum</div>
+          <span class="market-badge">1+ Gol · Doppietta · Tripletta</span>
         </div>
         <div class="odds-grid scorers-grid">
           ${an.scorerMarkets.map(sc => {
@@ -745,8 +745,8 @@ function renderMarketsForMatch(match) {
     html += `
       <div class="market-block">
         <div class="market-block-header">
-          <div class="market-block-title">🧤 Speciale Portieri: ATZENI &amp; FARET</div>
-          <span class="market-badge">Portieri Ufficiali</span>
+          <div class="market-block-title">🧤 Speciale Portieri</div>
+          <span class="market-badge">Parate &amp; Rigori</span>
         </div>
         <div class="odds-grid">
           ${an.goalkeeperMarkets.map(gk =>
