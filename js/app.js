@@ -6,11 +6,11 @@
    ============================================================ */
 
 const STORAGE_KEYS = {
-  USERS: "oppidum_season_users_v8",
-  CURRENT_USER: "oppidum_season_current_user_v8",
-  BETS: "oppidum_season_bets_v8",
-  MATCHES: "oppidum_season_matches_v8",
-  APPEARANCES_REF: "oppidum_season_hist_apps_v8"
+  USERS: "oppidum_season_users_v9",
+  CURRENT_USER: "oppidum_season_current_user_v9",
+  BETS: "oppidum_season_bets_v9",
+  MATCHES: "oppidum_season_matches_v9",
+  APPEARANCES_REF: "oppidum_season_hist_apps_v9"
 };
 
 const CLOUD_SYNC_URL = "https://api.restful-api.dev/objects/ff808181a09d98f701a1ef0b06e131f8";
@@ -89,6 +89,7 @@ const HISTORICAL_AI_REFERENCE = {
 let appState = {
   selectedMatchId: null,
   activeMarketCategory: "all", // all | main | scorers | gk | goliardic
+  selectedHistoryMatchday: "ALL", // ALL | 1 | 2 | ...
   betSlip: []
 };
 
@@ -517,7 +518,8 @@ function getSeasonMatches() {
   const exampleMatches = [
     {
       id: "ex_match_1",
-      title: "Partita di Esempio 1 — Serie C",
+      matchday: 1,
+      title: "1ª Giornata — Serie C",
       date: "Sabato 28 Nov 2026 · Ore 15:00",
       kickoffIso: "2026-11-28T15:00:00+01:00",
       opponent: "Promogest Quartu SE",
@@ -532,7 +534,8 @@ function getSeasonMatches() {
     },
     {
       id: "ex_match_2",
-      title: "Partita di Esempio 2 — Serie C",
+      matchday: 2,
+      title: "2ª Giornata — Serie C",
       date: "Sabato 5 Dic 2026 · Ore 16:30",
       kickoffIso: "2026-12-05T16:30:00+01:00",
       opponent: "RN Cagliari",
@@ -557,9 +560,62 @@ function saveSeasonMatches(matches) {
 function getBetSlips() {
   const raw = localStorage.getItem(STORAGE_KEYS.BETS);
   if (raw) {
-    try { return JSON.parse(raw); } catch (e) {}
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length) return parsed;
+    } catch (e) {}
   }
-  return [];
+  const initialSlips = [
+    {
+      id: "slip_ex_1",
+      userId: "u_1",
+      userName: "Scommettitore 1",
+      matchday: 1,
+      matchdayLabel: "1ª Giornata — Oppidum vs Promogest Quartu SE",
+      createdAt: "18 nov, 14:30",
+      picks: [
+        { matchId: "ex_match_1", matchday: 1, matchTitle: "1ª Giornata: Oppidum vs Promogest Quartu SE", marketKey: "1X2_1", label: "1 · Oppidum", odd: 1.48 },
+        { matchId: "ex_match_1", matchday: 1, matchTitle: "1ª Giornata: Oppidum vs Promogest Quartu SE", marketKey: "SC_melis_2", label: "MELIS 2+ Gol", odd: 1.75 }
+      ],
+      stake: 15,
+      totalOdd: 2.59,
+      potentialPayout: 39,
+      status: "open"
+    },
+    {
+      id: "slip_ex_2",
+      userId: "u_2",
+      userName: "Scommettitore 2",
+      matchday: 1,
+      matchdayLabel: "1ª Giornata — Oppidum vs Promogest Quartu SE",
+      createdAt: "18 nov, 14:45",
+      picks: [
+        { matchId: "ex_match_1", matchday: 1, matchTitle: "1ª Giornata: Oppidum vs Promogest Quartu SE", marketKey: "gk_rigore", label: "🧤 ATZENI o FARET para almeno un rigore (5m)", odd: 2.75 }
+      ],
+      stake: 10,
+      totalOdd: 2.75,
+      potentialPayout: 28,
+      status: "open"
+    },
+    {
+      id: "slip_ex_3",
+      userId: "u_3",
+      userName: "Scommettitore 3",
+      matchday: 2,
+      matchdayLabel: "2ª Giornata — Oppidum vs RN Cagliari",
+      createdAt: "18 nov, 15:00",
+      picks: [
+        { matchId: "ex_match_2", matchday: 2, matchTitle: "2ª Giornata: Oppidum vs RN Cagliari", marketKey: "DC_1X", label: "1X (Oppidum/Par.)", odd: 1.65 },
+        { matchId: "ex_match_2", matchday: 2, matchTitle: "2ª Giornata: Oppidum vs RN Cagliari", marketKey: "SC_piras_1", label: "PIRAS Segna 1+", odd: 1.38 }
+      ],
+      stake: 10,
+      totalOdd: 2.28,
+      potentialPayout: 23,
+      status: "open"
+    }
+  ];
+  localStorage.setItem(STORAGE_KEYS.BETS, JSON.stringify(initialSlips));
+  return initialSlips;
 }
 
 function saveBetSlips(slips) {
@@ -925,6 +981,9 @@ function toggleBetPick(matchId, matchTitle, marketKey, label, odd) {
     return;
   }
 
+  const matchday = match?.matchday || 1;
+  const fullTitle = `${matchday}ª Giornata: ${matchTitle}`;
+
   const idx = appState.betSlip.findIndex(i => i.matchId === matchId && i.marketKey === marketKey);
   if (idx >= 0) {
     appState.betSlip.splice(idx, 1);
@@ -932,7 +991,8 @@ function toggleBetPick(matchId, matchTitle, marketKey, label, odd) {
     appState.betSlip.push({
       id: uid("pick"),
       matchId,
-      matchTitle,
+      matchday,
+      matchTitle: fullTitle,
       marketKey,
       label,
       odd: Number(odd)
@@ -1084,6 +1144,13 @@ function placeBetSlip() {
   const potentialPayout = Math.round(stake * totalOdd);
   const nowIso = new Date().toISOString();
 
+  // Determina la giornata di riferimento della schedina
+  const primaryMatchday = appState.betSlip[0]?.matchday || 1;
+  const refMatch = matches.find(m => m.matchday === primaryMatchday) || matches[0];
+  const matchdayLabel = refMatch
+    ? `${primaryMatchday}ª Giornata — ${refMatch.isHome ? "Oppidum vs " + refMatch.opponent : refMatch.opponent + " vs Oppidum"}`
+    : `${primaryMatchday}ª Giornata`;
+
   user.credits -= stake;
   user.totalStaked = (user.totalStaked || 0) + stake;
   saveUsers(users);
@@ -1093,6 +1160,8 @@ function placeBetSlip() {
     id: uid("slip"),
     userId: user.id,
     userName: user.name,
+    matchday: primaryMatchday,
+    matchdayLabel,
     placedAtIso: nowIso,
     createdAt: new Date().toLocaleString("it-IT", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }),
     picks: [...appState.betSlip],
@@ -1109,7 +1178,7 @@ function placeBetSlip() {
   renderBettingTab();
   renderBetSlip();
   renderLeaderboardTab();
-  showToast(`✅ Schedina convalidata entro il fischio d'inizio per <strong>${esc(user.name)}</strong>! Vincita potenziale: <strong>${potentialPayout} Crediti</strong>`);
+  showToast(`✅ Schedina registrata nella <strong>${primaryMatchday}ª Giornata</strong> per <strong>${esc(user.name)}</strong>!`);
 }
 
 function shareCurrentSlipWhatsApp() {
@@ -1129,8 +1198,13 @@ function shareCurrentSlipWhatsApp() {
 }
 
 // ============================================================
-// 8. TAB 2: CLASSIFICA SCOMMETTITORI & SCHEDINE
+// 8. TAB 2: CLASSIFICA SCOMMETTITORI & SCHEDINE GIORNATA PER GIORNATA
 // ============================================================
+function setHistoryMatchdayFilter(md) {
+  appState.selectedHistoryMatchday = md;
+  renderLeaderboardTab();
+}
+
 function renderLeaderboardTab() {
   const users = getUsers();
   const sorted = [...users].sort((a, b) => b.credits - a.credits);
@@ -1154,42 +1228,104 @@ function renderLeaderboardTab() {
   }
 
   const slips = getBetSlips();
+  const matches = getSeasonMatches();
   const slipsBox = document.getElementById("allSlipsHistoryBox");
   if (!slipsBox) return;
 
+  // Raccoglie tutte le giornate presenti (dalle partite e dalle schedine)
+  const matchdaySet = new Set();
+  matches.forEach(m => { if (m.matchday) matchdaySet.add(Number(m.matchday)); });
+  slips.forEach(s => { if (s.matchday) matchdaySet.add(Number(s.matchday)); });
+  const allMatchdays = Array.from(matchdaySet).sort((a, b) => a - b);
+
+  // Barra filtro Giornata per Giornata
+  const activeFilter = appState.selectedHistoryMatchday;
+  const filterBarHtml = `
+    <div class="market-category-tabs" style="margin-bottom:16px;">
+      <button type="button" class="market-cat-btn ${activeFilter === 'ALL' ? 'active' : ''}" onclick="setHistoryMatchdayFilter('ALL')">
+        📅 Tutte le Giornate (${slips.length})
+      </button>
+      ${allMatchdays.map(md => {
+        const count = slips.filter(s => Number(s.matchday || 1) === md).length;
+        return `
+          <button type="button" class="market-cat-btn ${Number(activeFilter) === md ? 'active' : ''}" onclick="setHistoryMatchdayFilter(${md})">
+            🤽 ${md}ª Giornata (${count})
+          </button>
+        `;
+      }).join("")}
+    </div>
+  `;
+
   if (!slips.length) {
-    slipsBox.innerHTML = `<p class="panel-sub">Nessuna schedina ancora giocata. Fai il login e piazza la tua giocata prima del fischio d'inizio!</p>`;
+    slipsBox.innerHTML = filterBarHtml + `<p class="panel-sub">Nessuna schedina ancora giocata. Fai il login e piazza la tua giocata prima del fischio d'inizio!</p>`;
     return;
   }
 
-  slipsBox.innerHTML = slips.map(s => {
-    const statusBadge = s.status === "open"
-      ? `<span class="badge badge-open">✅ CONVALIDATA</span>`
-      : s.status === "won"
-        ? `<span class="badge badge-won">🏆 VINTA (+${s.potentialPayout} Cr.)</span>`
-        : `<span class="badge badge-lost">❌ PERSA (-${s.stake} Cr.)</span>`;
+  const daysToShow = activeFilter === "ALL"
+    ? allMatchdays
+    : allMatchdays.filter(md => md === Number(activeFilter));
+
+  const groupedHtml = daysToShow.map(md => {
+    const mdSlips = slips.filter(s => Number(s.matchday || 1) === md);
+    const mdMatch = matches.find(m => Number(m.matchday) === md);
+    const headerLabel = mdMatch
+      ? `${md}ª Giornata — ${mdMatch.isHome ? "Oppidum S. Cagliari vs " + mdMatch.opponent : mdMatch.opponent + " vs Oppidum S. Cagliari"}`
+      : (mdSlips[0]?.matchdayLabel || `${md}ª Giornata`);
+
+    if (!mdSlips.length) {
+      return `
+        <div class="market-block" style="margin-bottom:14px;">
+          <div class="market-block-header">
+            <div class="market-block-title">📅 ${esc(headerLabel)}</div>
+            <span class="market-badge">0 schedine</span>
+          </div>
+          <p class="panel-sub">Nessuna scommessa registrata per questa giornata.</p>
+        </div>
+      `;
+    }
 
     return `
-      <div class="market-block" style="margin-bottom:10px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
-          <div>
-            <strong>👤 ${esc(s.userName)}</strong>
-            <span class="panel-sub" style="margin-left:8px;">🕒 ${esc(s.createdAt)}</span>
+      <div class="market-block" style="margin-bottom:16px;border-color:var(--border-strong);">
+        <div class="market-block-header" style="border-bottom:1px solid var(--border);padding-bottom:10px;margin-bottom:12px;">
+          <div class="market-block-title" style="color:var(--gold);font-size:1rem;">
+            📅 ${esc(headerLabel)}
           </div>
-          <div style="display:flex;align-items:center;gap:8px;">
-            ${statusBadge}
-          </div>
+          <span class="market-badge">${mdSlips.length} ${mdSlips.length === 1 ? "schedina giocata" : "schedine giocate"}</span>
         </div>
-        <div style="font-size:0.84rem;color:#cbd5e1;margin-bottom:8px;">
-          ${s.picks.map(p => `<div>• <em>${esc(p.matchTitle)}</em>: <strong>${esc(p.label)}</strong> (<span style="color:var(--gold)">@${p.odd.toFixed(2)}</span>)</div>`).join("")}
-        </div>
-        <div style="font-size:0.8rem;color:var(--text-muted);display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px;border-top:1px solid var(--border);padding-top:6px;">
-          <span>Puntata: <strong>${s.stake} Cr.</strong> · Quota: <strong>${s.totalOdd.toFixed(2)}</strong></span>
-          <span>Vincita: <strong style="color:var(--gold)">${s.potentialPayout} Crediti</strong></span>
+
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          ${mdSlips.map(s => {
+            const statusBadge = s.status === "open"
+              ? `<span class="badge badge-open">✅ IN CORSO</span>`
+              : s.status === "won"
+                ? `<span class="badge badge-won">🏆 VINTA (+${s.potentialPayout} Cr.)</span>`
+                : `<span class="badge badge-lost">❌ PERSA (-${s.stake} Cr.)</span>`;
+
+            return `
+              <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:8px;">
+                  <div>
+                    <strong>👤 ${esc(s.userName)}</strong>
+                    <span class="panel-sub" style="margin-left:6px;">🕒 ${esc(s.createdAt)}</span>
+                  </div>
+                  <div>${statusBadge}</div>
+                </div>
+                <div style="font-size:0.82rem;color:#cbd5e1;margin-bottom:8px;display:flex;flex-direction:column;gap:3px;">
+                  ${s.picks.map(p => `<div>• <strong>${esc(p.label)}</strong> <span style="color:var(--gold);font-weight:700;">@${p.odd.toFixed(2)}</span></div>`).join("")}
+                </div>
+                <div style="font-size:0.78rem;color:var(--text-muted);display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px;border-top:1px solid var(--border);padding-top:6px;">
+                  <span>Puntata: <strong>${s.stake} Cr.</strong> · Quota Totale: <strong>${s.totalOdd.toFixed(2)}</strong></span>
+                  <span>Vincita Potenziale: <strong style="color:var(--gold)">${s.potentialPayout} Crediti</strong></span>
+                </div>
+              </div>
+            `;
+          }).join("")}
         </div>
       </div>
     `;
   }).join("");
+
+  slipsBox.innerHTML = filterBarHtml + groupedHtml;
 }
 
 // ============================================================
