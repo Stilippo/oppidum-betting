@@ -323,9 +323,21 @@ function getHistoricalAppearancesMap() {
   return map;
 }
 
-function computeNewSeasonPlayerStats() {
-  const matches = getSeasonMatches();
-  const playedMatches = matches.filter(m => m.status === "settled");
+function computeNewSeasonPlayerStats(matchesOverride = null) {
+  let playedMatches = [];
+  if (Array.isArray(matchesOverride)) {
+    playedMatches = matchesOverride.filter(m => m.status === "settled");
+  } else {
+    const raw = localStorage.getItem(STORAGE_KEYS.MATCHES);
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          playedMatches = parsed.filter(m => m.status === "settled");
+        }
+      } catch (e) {}
+    }
+  }
   const histApps = getHistoricalAppearancesMap();
 
   return HISTORICAL_AI_REFERENCE.roster.map(p => {
