@@ -6,11 +6,11 @@
    ============================================================ */
 
 const STORAGE_KEYS = {
-  USERS: "oppidum_season_users_v13",
-  CURRENT_USER: "oppidum_season_current_user_v13",
-  BETS: "oppidum_season_bets_v13",
-  MATCHES: "oppidum_season_matches_v13",
-  APPEARANCES_REF: "oppidum_season_hist_apps_v13"
+  USERS: "oppidum_season_users_v14",
+  CURRENT_USER: "oppidum_season_current_user_v14",
+  BETS: "oppidum_season_bets_v14",
+  MATCHES: "oppidum_season_matches_v14",
+  APPEARANCES_REF: "oppidum_season_hist_apps_v14"
 };
 
 const CLOUD_SYNC_URL = "https://api.restful-api.dev/objects/ff808181a09d98f701a1ef0b06e131f8";
@@ -61,25 +61,25 @@ const HISTORICAL_AI_REFERENCE = {
   // - Difensori: Pilia FL (Capitano), Morzetti, Pieroni
   // - Esterni / Fasce: De Giudici (Vice Capitano) e tutti gli altri
   roster: [
-    { id: "atzeni",     name: "ATZENI",     role: "Portiere",  isGk: true,  histGoals: 0,  histApps: 18, note: "Portiere" },
-    { id: "faret",      name: "FARET",      role: "Portiere",  isGk: true,  histGoals: 0,  histApps: 18, note: "Portiere" },
-    { id: "melis",      name: "MELIS",      role: "Fascia",    isGk: false, histGoals: 34, histApps: 18, note: "Giocatore di Fascia" },
-    { id: "piras",      name: "PIRAS",      role: "Centroboa", isGk: false, histGoals: 24, histApps: 18, note: "Centroboa" },
-    { id: "de_giudici", name: "DE GIUDICI", role: "Fascia",    isGk: false, histGoals: 18, histApps: 16, note: "Vice Capitano · Fascia", leadership: "Vice Capitano" },
-    { id: "sacco",      name: "SACCO",      role: "Fascia",    isGk: false, histGoals: 12, histApps: 16, note: "Giocatore di Fascia" },
-    { id: "ballestri",  name: "BALLESTRI",  role: "Centroboa", isGk: false, histGoals: 10, histApps: 15, note: "Centroboa" },
-    { id: "petretto",   name: "PETRETTO",   role: "Fascia",    isGk: false, histGoals: 7,  histApps: 15, note: "Giocatore di Fascia" },
-    { id: "erriu",      name: "ERRIU",      role: "Fascia",    isGk: false, histGoals: 6,  histApps: 14, note: "Giocatore di Fascia" },
-    { id: "cannas",     name: "CANNAS",     role: "Fascia",    isGk: false, histGoals: 5,  histApps: 14, note: "Giocatore di Fascia" },
-    { id: "pilia_fl",   name: "PILIA FL",   role: "Difensore", isGk: false, histGoals: 3,  histApps: 12, note: "Capitano · Difensore", leadership: "Capitano" },
-    { id: "troncia",    name: "TRONCIA",    role: "Fascia",    isGk: false, histGoals: 3,  histApps: 12, note: "Giocatore di Fascia" },
-    { id: "pieroni",    name: "PIERONI",    role: "Difensore", isGk: false, histGoals: 2,  histApps: 10, note: "Difensore" },
-    { id: "pilia_fb",   name: "PILIA FB",   role: "Fascia",    isGk: false, histGoals: 1,  histApps: 10, note: "Giocatore di Fascia" },
-    { id: "morzetti",   name: "MORZETTI",   role: "Difensore", isGk: false, histGoals: 0,  histApps: 8,  note: "Difensore" },
-    { id: "murtas",     name: "MURTAS",     role: "Fascia",    isGk: false, histGoals: 0,  histApps: 8,  note: "Giocatore di Fascia" },
-    { id: "orru",       name: "ORRU'",      role: "Fascia",    isGk: false, histGoals: 0,  histApps: 8,  note: "Giocatore di Fascia" },
-    { id: "pittotti",   name: "PITTOTTI",   role: "Centroboa", isGk: false, histGoals: 0,  histApps: 1,  note: "Centroboa" },
-    { id: "olla",       name: "OLLA",       role: "Fascia",    isGk: false, histGoals: 0,  histApps: 0,  note: "Giocatore di Fascia" }
+    { id: "atzeni",     name: "ATZENI",     role: "Portiere",  isGk: true,  histGoals: 0,  histFouls: 1,  histApps: 18, note: "Portiere" },
+    { id: "faret",      name: "FARET",      role: "Portiere",  isGk: true,  histGoals: 0,  histFouls: 1,  histApps: 18, note: "Portiere" },
+    { id: "melis",      name: "MELIS",      role: "Fascia",    isGk: false, histGoals: 34, histFouls: 16, histApps: 18, note: "Giocatore di Fascia" },
+    { id: "piras",      name: "PIRAS",      role: "Centroboa", isGk: false, histGoals: 24, histFouls: 22, histApps: 18, note: "Centroboa" },
+    { id: "de_giudici", name: "DE GIUDICI", role: "Fascia",    isGk: false, histGoals: 18, histFouls: 15, histApps: 16, note: "Vice Capitano · Fascia", leadership: "Vice Capitano" },
+    { id: "sacco",      name: "SACCO",      role: "Fascia",    isGk: false, histGoals: 12, histFouls: 18, histApps: 16, note: "Giocatore di Fascia" },
+    { id: "ballestri",  name: "BALLESTRI",  role: "Centroboa", isGk: false, histGoals: 10, histFouls: 19, histApps: 15, note: "Centroboa" },
+    { id: "petretto",   name: "PETRETTO",   role: "Fascia",    isGk: false, histGoals: 7,  histFouls: 14, histApps: 15, note: "Giocatore di Fascia" },
+    { id: "erriu",      name: "ERRIU",      role: "Fascia",    isGk: false, histGoals: 6,  histFouls: 12, histApps: 14, note: "Giocatore di Fascia" },
+    { id: "cannas",     name: "CANNAS",     role: "Fascia",    isGk: false, histGoals: 5,  histFouls: 13, histApps: 14, note: "Giocatore di Fascia" },
+    { id: "pilia_fl",   name: "PILIA FL",   role: "Difensore", isGk: false, histGoals: 3,  histFouls: 21, histApps: 12, note: "Capitano · Difensore", leadership: "Capitano" },
+    { id: "troncia",    name: "TRONCIA",    role: "Fascia",    isGk: false, histGoals: 3,  histFouls: 11, histApps: 12, note: "Giocatore di Fascia" },
+    { id: "pieroni",    name: "PIERONI",    role: "Difensore", isGk: false, histGoals: 2,  histFouls: 16, histApps: 10, note: "Difensore" },
+    { id: "pilia_fb",   name: "PILIA FB",   role: "Fascia",    isGk: false, histGoals: 1,  histFouls: 9,  histApps: 10, note: "Giocatore di Fascia" },
+    { id: "morzetti",   name: "MORZETTI",   role: "Difensore", isGk: false, histGoals: 0,  histFouls: 13, histApps: 8,  note: "Difensore" },
+    { id: "murtas",     name: "MURTAS",     role: "Fascia",    isGk: false, histGoals: 0,  histFouls: 7,  histApps: 8,  note: "Giocatore di Fascia" },
+    { id: "orru",       name: "ORRU'",      role: "Fascia",    isGk: false, histGoals: 0,  histFouls: 7,  histApps: 8,  note: "Giocatore di Fascia" },
+    { id: "pittotti",   name: "PITTOTTI",   role: "Centroboa", isGk: false, histGoals: 0,  histFouls: 1,  histApps: 1,  note: "Centroboa" },
+    { id: "olla",       name: "OLLA",       role: "Fascia",    isGk: false, histGoals: 0,  histFouls: 0,  histApps: 0,  note: "Giocatore di Fascia" }
   ],
   // Calendario Ufficiale (Attualmente vuoto perché non ancora uscito; quando uscirà basterà popolarlo qui)
   officialCalendar: []
@@ -351,15 +351,20 @@ function computeNewSeasonPlayerStats(matchesOverride = null) {
     let newSeasonApps = 0;
     let newSeasonGoals = 0;
     let newSeasonFouls = 0;
+    let newSeasonOuts = 0;
+    const foulHistory = [];
 
-    playedMatches.forEach(m => {
+    playedMatches.forEach((m, idx) => {
       const presentIds = m.presentPlayerIds || [];
       const goalsMap = m.playerGoals || {};
       const foulsMap = m.playerFouls || {};
       if (presentIds.includes(p.id)) {
         newSeasonApps++;
         newSeasonGoals += Number(goalsMap[p.id] || 0);
-        newSeasonFouls += Math.min(3, Math.max(0, Number(foulsMap[p.id] || 0)));
+        const f = Math.min(3, Math.max(0, Number(foulsMap[p.id] || 0)));
+        newSeasonFouls += f;
+        if (f === 3) newSeasonOuts++;
+        foulHistory.push(`G${m.matchday || (idx + 1)}: ${f}`);
       }
     });
 
@@ -368,7 +373,9 @@ function computeNewSeasonPlayerStats(matchesOverride = null) {
       histApps: histApps[p.id] ?? p.histApps,
       newSeasonApps,
       newSeasonGoals,
-      newSeasonFouls
+      newSeasonFouls,
+      newSeasonOuts,
+      foulHistory
     };
   });
 }
@@ -1498,22 +1505,26 @@ function renderRosterAndPresenzeTab() {
   }
 
   // 3. Tabella Completa Statistiche Giocatori + Schede Giocatori
-  const referenceOdds = generateAiOddsForMatch("Promogest Quartu SE", true, 1.15, getAllRosterIds());
+  const referenceOdds = generateAiOddsForMatch("ANACONDA PALLANUOTO", true, 1.15, getAllRosterIds());
   const scorerMap = new Map(referenceOdds.scorerMarkets.map(s => [s.playerId, s]));
+  const exclMap = new Map((referenceOdds.exclusionMarkets || []).map(e => [e.playerId, e]));
 
   const statsTableBody = document.getElementById("rosterStatsTableBody");
   if (statsTableBody) {
     statsTableBody.innerHTML = playerStats.map((p, idx) => {
       const sc = scorerMap.get(p.id);
-      const totalApps = p.histApps + p.newSeasonApps;
-      const totalGoals = p.histGoals + p.newSeasonGoals;
-      const avgGoals = totalApps > 0 ? (totalGoals / totalApps).toFixed(2) : "0.00";
-      const baseOddStr = p.isGk ? "@2.75 (Rig.)" : (sc ? `@${sc.odd1Plus.toFixed(2)}` : "—");
+      const ex = exclMap.get(p.id);
+      const baseOddStr = p.isGk
+        ? "Gol @15.0 · Rig. @2.75"
+        : `Gol @${sc ? sc.odd1Plus.toFixed(2) : "—"} · 1+F @${ex ? ex.oddFoul1.toFixed(2) : "—"}`;
       const capBadge = p.leadership === "Capitano"
         ? ` <span class="badge badge-gk" title="Capitano">© CAP</span>`
         : p.leadership === "Vice Capitano"
           ? ` <span class="badge badge-open" title="Vice Capitano">VICE CAP</span>`
           : "";
+      const foulLogStr = p.foulHistory && p.foulHistory.length
+        ? `<div style="font-size:0.68rem;color:var(--text-muted);">${p.foulHistory.join(" · ")}</div>`
+        : "";
 
       return `
         <tr>
@@ -1521,12 +1532,16 @@ function renderRosterAndPresenzeTab() {
           <td><strong>${esc(p.name)}</strong>${capBadge}</td>
           <td><span class="badge ${p.isGk ? 'badge-gk' : 'badge-active'}">${esc(p.role)}</span></td>
           <td style="font-weight:700;color:var(--oppidum-sky);">${p.newSeasonApps}</td>
-          <td style="font-weight:800;color:var(--gold);">${p.isGk ? "—" : p.newSeasonGoals}</td>
-          <td style="font-weight:700;color:#f87171;">${p.isGk ? "—" : (p.newSeasonFouls || 0)}</td>
-          <td class="hide-mobile" style="color:var(--text-muted);font-size:0.8rem;">
-            ${p.isGk ? `${p.histApps} pres.` : `${p.histGoals} gol / ${p.histApps}p`}
+          <td style="font-weight:800;color:var(--gold);">${p.newSeasonGoals}</td>
+          <td style="font-weight:700;color:#f87171;">
+            ${p.newSeasonFouls || 0} falli
+            ${p.newSeasonOuts ? `<span class="badge badge-lost" style="margin-left:4px;">${p.newSeasonOuts} Out</span>` : ""}
+            ${foulLogStr}
           </td>
-          <td style="font-weight:800;color:var(--gold);">${baseOddStr}</td>
+          <td style="color:#cbd5e1;font-size:0.78rem;">
+            <strong>${p.histGoals}</strong> gol · <strong style="color:#fca5a5;">${p.histFouls || 0}</strong> falli <span class="hide-mobile">(${p.histApps} pres.)</span>
+          </td>
+          <td class="hide-mobile" style="font-weight:800;color:var(--gold);font-size:0.78rem;">${baseOddStr}</td>
         </tr>
       `;
     }).join("");
@@ -1536,6 +1551,7 @@ function renderRosterAndPresenzeTab() {
   if (rosterGrid) {
     rosterGrid.innerHTML = playerStats.map(p => {
       const sc = scorerMap.get(p.id);
+      const ex = exclMap.get(p.id);
       const cardClass = p.isGk ? "gk-card" : "";
       const roleBadge = p.isGk
         ? `<span class="badge badge-gk">🧤 PORTIERE</span>`
@@ -1545,6 +1561,9 @@ function renderRosterAndPresenzeTab() {
         : p.leadership === "Vice Capitano"
           ? `<span class="badge badge-open" style="margin-left:5px;">VICE CAPITANO</span>`
           : "";
+      const seasonFoulHistory = p.foulHistory && p.foulHistory.length
+        ? p.foulHistory.join(" · ")
+        : "Nessuna gara giocata in stagione";
 
       return `
         <div class="player-card ${cardClass}">
@@ -1555,17 +1574,16 @@ function renderRosterAndPresenzeTab() {
             </div>
             ${roleBadge}
           </div>
-          <div class="panel-sub">
-            ${p.isGk
-              ? `Presenze stagionali: ${p.newSeasonApps} · Storico: ${p.histApps} gare`
-              : `Stagione: ${p.newSeasonGoals} gol (${p.newSeasonApps} pres.) · Storico: ${p.histGoals} gol`
-            }
+          <div class="panel-sub" style="display:flex;flex-direction:column;gap:3px;">
+            <div>⚽ <strong>Stagione:</strong> ${p.newSeasonGoals} gol · <strong style="color:#fca5a5;">${p.newSeasonFouls || 0} falli</strong> (${p.newSeasonApps} pres.)</div>
+            <div>📚 <strong>Storico:</strong> ${p.histGoals} gol · <strong style="color:#fca5a5;">${p.histFouls || 0} falli</strong> (${p.histApps} pres.)</div>
+            <div style="font-size:0.72rem;color:var(--text-muted);">🟥 Storico falli gare: ${esc(seasonFoulHistory)}</div>
           </div>
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;padding-top:8px;border-top:1px solid var(--border);font-size:0.82rem;">
-            <span>Presenze: <strong style="color:var(--oppidum-sky);">${p.newSeasonApps}</strong></span>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;padding-top:8px;border-top:1px solid var(--border);font-size:0.78rem;">
             ${p.isGk
-              ? `<span style="color:var(--gold);font-weight:800;">Para Rigore @2.75</span>`
-              : `<span>Quota Gol AI: <strong style="color:var(--gold);font-size:0.95rem;">@${sc ? sc.odd1Plus.toFixed(2) : "—"}</strong></span>`
+              ? `<span>⚽ Gol Portiere: <strong style="color:var(--gold);">@15.00</strong></span><span>🧤 Rigore: <strong style="color:var(--gold);">@2.75</strong></span>`
+              : `<span>🎯 Gol: <strong style="color:var(--gold);">@${sc ? sc.odd1Plus.toFixed(2) : "—"}</strong></span>
+                 <span>🟥 1+ Fallo: <strong style="color:#fca5a5;">@${ex ? ex.oddFoul1.toFixed(2) : "—"}</strong></span>`
             }
           </div>
         </div>
