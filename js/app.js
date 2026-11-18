@@ -9,7 +9,7 @@ const STORAGE_KEYS = {
   USERS: "oppidum_season_users_v18",
   CURRENT_USER: "oppidum_season_current_user_v18",
   BETS: "oppidum_season_bets_v18",
-  MATCHES: "oppidum_season_matches_v18",
+  MATCHES: "oppidum_season_matches_v19",
   APPEARANCES_REF: "oppidum_season_hist_apps_v18"
 };
 
@@ -547,6 +547,9 @@ function generateAiOddsForMatch(opponentName, isHome = true, boostOppidum = 1.15
   const activeFieldPlayers = playerStats.filter(p =>
     !p.isGk && (!presentPlayerIds || presentPlayerIds.includes(p.id))
   );
+  const activeAllPlayers = playerStats.filter(p =>
+    !presentPlayerIds || presentPlayerIds.includes(p.id)
+  );
 
   const playerWeights = activeFieldPlayers.map(p => {
     const totGoals = p.histGoals + (p.newSeasonGoals * 1.5);
@@ -578,11 +581,12 @@ function generateAiOddsForMatch(opponentName, isHome = true, boostOppidum = 1.15
     };
   }).sort((a, b) => a.odd1Plus - b.odd1Plus);
 
-  // Calcolo Quote Espulsioni (Falli Personali: Esatti "Solo 1", "Solo 2", "3 Falli" + Soglie "0", "1+", "2+")
+  // Calcolo Quote Espulsioni (Falli Personali: inclusi anche i Portieri ATZENI e FARET)
   const rivalIntensity = Math.min(1.18, Math.max(0.90, lambdaOpponent / 11.0));
-  const exclusionMarkets = activeFieldPlayers.map(p => {
+  const exclusionMarkets = activeAllPlayers.map(p => {
     let baseFoulLambda = 0.88; // Giocatori di Fascia
-    if (p.role === "Difensore") baseFoulLambda = 1.58; // Marcatori del centroboa avversario
+    if (p.isGk || p.role === "Portiere") baseFoulLambda = 0.35; // Portieri (rigore commesso, palla sotto o proteste)
+    else if (p.role === "Difensore") baseFoulLambda = 1.58; // Marcatori del centroboa avversario
     else if (p.role === "Centroboa") baseFoulLambda = 1.22; // Lotta ai 2 metri
 
     const foulLambda = baseFoulLambda * rivalIntensity;
@@ -597,13 +601,14 @@ function generateAiOddsForMatch(opponentName, isHome = true, boostOppidum = 1.15
       playerId: p.id,
       name: p.name,
       role: p.role,
+      isGk: !!p.isGk,
       leadership: p.leadership || "",
-      oddExact0: probToOdd(pExact0, 1.06, 1.35, 6.50),
-      oddExact1: probToOdd(pExact1, 1.06, 2.10, 4.20),
-      oddExact2: probToOdd(pExact2, 1.06, 2.85, 6.80),
-      oddFoul1: probToOdd(pFoul1Plus, 1.06, 1.18, 3.50),
-      oddFoul2: probToOdd(pFoul2Plus, 1.06, 1.75, 6.50),
-      oddFoul3: probToOdd(pFoul3, 1.05, 2.90, 14.00)
+      oddExact0: probToOdd(pExact0, 1.06, 1.22, 6.50),
+      oddExact1: probToOdd(pExact1, 1.06, 2.10, 5.50),
+      oddExact2: probToOdd(pExact2, 1.06, 2.85, 11.00),
+      oddFoul1: probToOdd(pFoul1Plus, 1.06, 1.18, 4.50),
+      oddFoul2: probToOdd(pFoul2Plus, 1.06, 1.75, 9.50),
+      oddFoul3: probToOdd(pFoul3, 1.05, 2.90, 18.00)
     };
   }).sort((a, b) => a.oddFoul3 - b.oddFoul3);
 
@@ -1920,7 +1925,7 @@ function renderRosterAndPresenzeTab() {
       const sc = scorerMap.get(p.id);
       const ex = exclMap.get(p.id);
       const baseOddStr = p.isGk
-        ? "Gol @15.0 · Rig. @2.75"
+        ? `Gol @15.0 · 1+F @${ex ? ex.oddFoul1.toFixed(2) : "—"}`
         : `Gol @${sc ? sc.odd1Plus.toFixed(2) : "—"} · 1+F @${ex ? ex.oddFoul1.toFixed(2) : "—"}`;
       const capBadge = p.leadership === "Capitano"
         ? ` <span class="badge badge-gk" title="Capitano">© CAP</span>`
@@ -1986,7 +1991,7 @@ function renderRosterAndPresenzeTab() {
           </div>
           <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;padding-top:8px;border-top:1px solid var(--border);font-size:0.78rem;">
             ${p.isGk
-              ? `<span>⚽ Gol Portiere: <strong style="color:var(--gold);">@15.00</strong></span><span>🧤 Rigore: <strong style="color:var(--gold);">@2.75</strong></span>`
+              ? `<span>⚽ Gol Portiere: <strong style="color:var(--gold);">@15.00</strong></span><span>🟥 1+ Fallo: <strong style="color:#fca5a5;">@${ex ? ex.oddFoul1.toFixed(2) : "—"}</strong></span>`
               : `<span>🎯 Gol: <strong style="color:var(--gold);">@${sc ? sc.odd1Plus.toFixed(2) : "—"}</strong></span>
                  <span>🟥 1+ Fallo: <strong style="color:#fca5a5;">@${ex ? ex.oddFoul1.toFixed(2) : "—"}</strong></span>`
             }
