@@ -6,16 +6,16 @@
    ============================================================ */
 
 const STORAGE_KEYS = {
-  USERS: "oppidum_season_users_v16",
-  CURRENT_USER: "oppidum_season_current_user_v16",
-  BETS: "oppidum_season_bets_v16",
-  MATCHES: "oppidum_season_matches_v16",
-  APPEARANCES_REF: "oppidum_season_hist_apps_v16"
+  USERS: "oppidum_season_users_v17",
+  CURRENT_USER: "oppidum_season_current_user_v17",
+  BETS: "oppidum_season_bets_v17",
+  MATCHES: "oppidum_season_matches_v17",
+  APPEARANCES_REF: "oppidum_season_hist_apps_v17"
 };
 
 const CLOUD_SYNC_URL = "https://api.restful-api.dev/objects/ff808181a09d98f701a1ef0b06e131f8";
 const STARTING_CREDITS = 100;
-const MIN_VALID_ODD = 1.15; // Esclude quote troppo vicine a 1.00
+const MIN_VALID_ODD = 1.08; // Esclude quote troppo vicine a 1.00 (< 1.08)
 
 // ============================================================
 // 1. GIRONE 6 — C.R. SARDEGNA (QUESTA STAGIONE)
@@ -91,7 +91,7 @@ let appState = {
   activeMarketCategory: "all", // all | main | scorers | exclusions | gk | goliardic
   selectedHistoryMatchday: "ALL",
   betSlip: [],
-  // Selezione dinamica utente per Over/Under, Gol Esatti (min 1) e Handicap
+  // Selezione dinamica utente per Over/Under, Gol Esatti (min 1) e Handicap Negativi
   customSelections: {
     ouMatchLine: null,
     ouHomeLine: null,
@@ -99,7 +99,9 @@ let appState = {
     exactMatchGoals: null,
     exactHomeGoals: null,
     exactAwayGoals: null,
-    handicapHomeLine: null
+    hcpHomeNegLine: -1.5,
+    hcpAwayNegLine: -1.5,
+    playerExactGoals: {} // { [playerId]: 1, 2, 3... }
   }
 };
 
@@ -442,26 +444,31 @@ function generateAiOddsForMatch(opponentName, isHome = true, boostOppidum = 1.15
   const lambdaAway = isHome ? lambdaOpponent : lambdaOppidum;
   const lambdaTotal = lambdaHome + lambdaAway;
 
-  // Calcola probabilità reale Poisson Over(line) senza clamp artificiali
-  const rawOverProb = (lam, line) => {
-    const kMax = Math.floor(line);
-    let cdf = 0;
-    for (let k = 0; k <= kMax; k++) cdf += poissonPmf(k, lam);
-    return Math.max(0.0005, Math.min(0.9995, 1 - cdf));
+  // Distribuzione Gaussiana/Overdispersed calibrata sulla Pallanuoto (varianza più ampia del Poisson puro)
+  // permette di avere molte più opzioni di range Over/Under giocabili (da 10.5 a 35.5 sul match e da 3.5 a 20.5 sulle squadre)
+  const normalCdf = (x) => {
+    const t = 1 / (1 + 0.2316419 * Math.abs(x));
+    const d = 0.3989423 * Math.exp(-x * x / 2);
+    const p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
+    return x > 0 ? 1 - p : p;
   };
 
-  // Costruisce tutti i range validi per un dato lambda, ESCLUDENDO le soglie
-  // dove Over o Under hanno una quota troppo vicina all'1 (< MIN_VALID_ODD = 1.15)
-  const buildValidOuRanges = (lam, minK, maxK) => {
+  const overProbWaterPolo = (mean, line, spreadFactor = 2.05) => {
+    const sigma = Math.sqrt(mean) * spreadFactor;
+    const z = (line - mean) / sigma;
+    return Math.max(0.005, Math.min(0.995, 1 - normalCdf(z)));
+  };
+
+  // Costruisce tutti i range Over/Under validi (molte più opzioni!), escludendo solo quote < 1.08
+  const buildValidOuRanges = (lam, minK, maxK, spreadFactor = 2.05) => {
     const list = [];
     for (let k = minK; k <= maxK; k++) {
       const line = k + 0.5;
-      const pOver = rawOverProb(lam, line);
+      const pOver = overProbWaterPolo(lam, line, spreadFactor);
       const pUnder = 1 - pOver;
-      const rawOddOver = Number((1 / (pOver * 1.05)).toFixed(2));
-      const rawOddUnder = Number((1 / (pUnder * 1.05)).toFixed(2));
-      // Scarta i range con quota troppo vicina a 1 (< 1.15) o fuori scala (> 18.0)
-      if (rawOddOver >= MIN_VALID_ODD && rawOddUnder >= MIN_VALID_ODD && rawOddOver <= 18 && rawOddUnder <= 18) {
+      const rawOddOver = Number((1 / (pOver * 1.045)).toFixed(2));
+      const rawOddUnder = Number((1 / (pUnder * 1.045)).toFixed(2));
+      if (rawOddOver >= MIN_VALID_ODD && rawOddUnder >= MIN_VALID_ODD && rawOddOver <= 25 && rawOddUnder <= 25) {
         list.push({
           line,
           oddOver: rawOddOver,
@@ -472,41 +479,35 @@ function generateAiOddsForMatch(opponentName, isHome = true, boostOppidum = 1.15
     return list;
   };
 
-  // 1) Tutti i range validi Over/Under Tutto il Match
-  const ouTotalLines = buildValidOuRanges(lambdaTotal, 8, 36);
-  // 2) Tutti i range validi Over/Under Squadra Casa
-  const ouHomeLines = buildValidOuRanges(lambdaHome, 2, 22);
-  // 3) Tutti i range validi Over/Under Squadra Trasferta
-  const ouAwayLines = buildValidOuRanges(lambdaAway, 2, 22);
+  // 1) Ampio range Over/Under Tutto il Match (circa 22-26 linee selezionabili!)
+  const ouTotalLines = buildValidOuRanges(lambdaTotal, 8, 38, 2.15);
+  // 2) Ampio range Over/Under Squadra Casa (circa 15-18 linee selezionabili!)
+  const ouHomeLines = buildValidOuRanges(lambdaHome, 2, 23, 2.05);
+  // 3) Ampio range Over/Under Squadra Trasferta (circa 15-18 linee selezionabili!)
+  const ouAwayLines = buildValidOuRanges(lambdaAway, 2, 23, 2.05);
 
-  // 4) Tutti gli Handicap Casa/Trasferta validi (escludendo quote < 1.15)
-  const handicapLines = [];
-  for (let k = -10; k <= 10; k++) {
-    const hcpHome = k + 0.5;
-    let pHomeCover = 0;
-    for (let gh = 0; gh <= 32; gh++) {
-      const ph = poissonPmf(gh, lambdaHome);
-      for (let ga = 0; ga <= 32; ga++) {
-        if (gh + hcpHome > ga) {
-          pHomeCover += ph * poissonPmf(ga, lambdaAway);
-        }
-      }
-    }
-    pHomeCover = Math.max(0.001, Math.min(0.999, pHomeCover));
-    const pAwayCover = 1 - pHomeCover;
-    const oddHome = Number((1 / (pHomeCover * 1.05)).toFixed(2));
-    const oddAway = Number((1 / (pAwayCover * 1.05)).toFixed(2));
-    if (oddHome >= MIN_VALID_ODD && oddAway >= MIN_VALID_ODD && oddHome <= 15 && oddAway <= 15) {
-      const hcpAway = -hcpHome;
-      handicapLines.push({
-        hcpHome,
-        hcpAway,
-        hcpHomeStr: hcpHome > 0 ? `+${hcpHome.toFixed(1)}` : hcpHome.toFixed(1),
-        hcpAwayStr: hcpAway > 0 ? `+${hcpAway.toFixed(1)}` : hcpAway.toFixed(1),
-        oddHome,
-        oddAway
-      });
-    }
+  // 4) Handicap SOLO NEGATIVI (-1.5, -2.5, -3.5, -4.5, -5.5, -6.5, -7.5, -8.5, -9.5, -10.5)
+  // Per vincere una scommessa con Handicap, la squadra scelta deve vincere con almeno 2, 3, 4... gol di scarto!
+  const diffSigma = Math.sqrt(lambdaHome + lambdaAway) * 1.65;
+  const handicapNegativeLines = [];
+  for (let margin = 1; margin <= 10; margin++) {
+    const negLine = -(margin + 0.5); // -1.5, -2.5, ..., -10.5
+    const neededDiff = margin + 0.5; // deve vincere di almeno margin+1 gol
+    const zHome = (neededDiff - (lambdaHome - lambdaAway)) / diffSigma;
+    const zAway = (neededDiff - (lambdaAway - lambdaHome)) / diffSigma;
+    const pHomeWinByMargin = Math.max(0.015, Math.min(0.88, 1 - normalCdf(zHome)));
+    const pAwayWinByMargin = Math.max(0.015, Math.min(0.88, 1 - normalCdf(zAway)));
+
+    const oddHomeNeg = Number(Math.max(MIN_VALID_ODD, Math.min(28.0, 1 / (pHomeWinByMargin * 1.05))).toFixed(2));
+    const oddAwayNeg = Number(Math.max(MIN_VALID_ODD, Math.min(28.0, 1 / (pAwayWinByMargin * 1.05))).toFixed(2));
+
+    handicapNegativeLines.push({
+      negLine, // es. -1.5
+      negLineStr: negLine.toFixed(1), // "-1.5"
+      minGoalsDiff: margin + 1, // es. 2 gol di scarto
+      oddHomeNeg,
+      oddAwayNeg
+    });
   }
 
   const playerStats = computeNewSeasonPlayerStats();
@@ -525,7 +526,7 @@ function generateAiOddsForMatch(opponentName, isHome = true, boostOppidum = 1.15
   const sumWeights = playerWeights.reduce((s, x) => s + x.weight, 0) || 1;
 
   const scorerMarkets = playerWeights.map(({ player, weight }) => {
-    const playerLambda = Math.max(0.10, lambdaOppidum * (weight / sumWeights));
+    const playerLambda = Math.max(0.12, lambdaOppidum * (weight / sumWeights));
     const p1Plus = 1 - Math.exp(-playerLambda);
     const p2Plus = 1 - (poissonPmf(0, playerLambda) + poissonPmf(1, playerLambda));
     const p3Plus = 1 - (poissonPmf(0, playerLambda) + poissonPmf(1, playerLambda) + poissonPmf(2, playerLambda));
@@ -622,7 +623,7 @@ function generateAiOddsForMatch(opponentName, isHome = true, boostOppidum = 1.15
       ouTotalLines,
       ouHomeLines,
       ouAwayLines,
-      handicapLines
+      handicapNegativeLines
     },
     scorerMarkets,
     exclusionMarkets,
@@ -979,8 +980,13 @@ function computeExactGoalsOdd(lambda, kGoals) {
   return Number(Math.max(MIN_VALID_ODD, Math.min(35.0, rawOdd)).toFixed(2));
 }
 
-function updateCustomMarketSelection(key, val, matchId) {
-  if (key.startsWith("exact")) {
+function updateCustomMarketSelection(key, val, matchId, playerId = null) {
+  if (key === "playerExactGoals" && playerId) {
+    let n = parseInt(val, 10);
+    if (isNaN(n) || n < 1) n = 1; // Minimo 1 gol, mai 0
+    if (n > 15) n = 15;
+    appState.customSelections.playerExactGoals[playerId] = n;
+  } else if (key.startsWith("exact")) {
     let n = parseInt(val, 10);
     if (isNaN(n) || n < 1) n = 1; // Mai zero! Minimo 1 gol
     if (n > 45) n = 45;
@@ -1005,11 +1011,10 @@ function renderMarketsForMatch(match) {
   const lamAway = an.lambdaAway || (match.isHome ? an.lambdaOpponent : an.lambdaOppidum);
   const lamTot  = an.lambdaTotal || (lamHome + lamAway);
 
-  // Inizializza le selezioni dinamiche sui valori centrali se non ancora scelte dall'utente
   const ouTotList  = mm.ouTotalLines || [];
   const ouHomeList = mm.ouHomeLines || [];
   const ouAwayList = mm.ouAwayLines || [];
-  const hcpList    = mm.handicapLines || [];
+  const hcpNegList = mm.handicapNegativeLines || [];
 
   const cs = appState.customSelections;
   if (!cs.ouMatchLine || !ouTotList.some(r => r.line === cs.ouMatchLine)) {
@@ -1021,8 +1026,11 @@ function renderMarketsForMatch(match) {
   if (!cs.ouAwayLine || !ouAwayList.some(r => r.line === cs.ouAwayLine)) {
     cs.ouAwayLine = ouAwayList[Math.floor(ouAwayList.length / 2)]?.line || 10.5;
   }
-  if (cs.handicapHomeLine === null || !hcpList.some(r => r.hcpHome === cs.handicapHomeLine)) {
-    cs.handicapHomeLine = hcpList[Math.floor(hcpList.length / 2)]?.hcpHome ?? mm.handicapLine;
+  if (!cs.hcpHomeNegLine || !hcpNegList.some(r => r.negLine === cs.hcpHomeNegLine)) {
+    cs.hcpHomeNegLine = -1.5;
+  }
+  if (!cs.hcpAwayNegLine || !hcpNegList.some(r => r.negLine === cs.hcpAwayNegLine)) {
+    cs.hcpAwayNegLine = -1.5;
   }
   if (!cs.exactMatchGoals || cs.exactMatchGoals < 1) cs.exactMatchGoals = Math.max(1, Math.round(lamTot));
   if (!cs.exactHomeGoals  || cs.exactHomeGoals < 1)  cs.exactHomeGoals  = Math.max(1, Math.round(lamHome));
@@ -1031,11 +1039,8 @@ function renderMarketsForMatch(match) {
   const selTotRow  = ouTotList.find(r => r.line === cs.ouMatchLine)  || ouTotList[0]  || { line: mm.totalLine, oddOver: 1.85, oddUnder: 1.85 };
   const selHomeRow = ouHomeList.find(r => r.line === cs.ouHomeLine) || ouHomeList[0] || { line: mm.oppidumLine, oddOver: 1.85, oddUnder: 1.85 };
   const selAwayRow = ouAwayList.find(r => r.line === cs.ouAwayLine) || ouAwayList[0] || { line: 10.5, oddOver: 1.85, oddUnder: 1.85 };
-  const selHcpRow  = hcpList.find(r => r.hcpHome === cs.handicapHomeLine) || hcpList[0] || {
-    hcpHome: mm.handicapLine, hcpAway: -mm.handicapLine,
-    hcpHomeStr: `+${mm.handicapLine}`, hcpAwayStr: `${-mm.handicapLine}`,
-    oddHome: 1.85, oddAway: 1.85
-  };
+  const selHcpHome = hcpNegList.find(r => r.negLine === cs.hcpHomeNegLine) || hcpNegList[0] || { negLine: -1.5, negLineStr: "-1.5", minGoalsDiff: 2, oddHomeNeg: 2.40, oddAwayNeg: 2.10 };
+  const selHcpAway = hcpNegList.find(r => r.negLine === cs.hcpAwayNegLine) || hcpNegList[0] || { negLine: -1.5, negLineStr: "-1.5", minGoalsDiff: 2, oddHomeNeg: 2.40, oddAwayNeg: 2.10 };
 
   const oddExactMatch = computeExactGoalsOdd(lamTot, cs.exactMatchGoals);
   const oddExactHome  = computeExactGoalsOdd(lamHome, cs.exactHomeGoals);
@@ -1072,7 +1077,7 @@ function renderMarketsForMatch(match) {
       <div class="market-block">
         <div class="market-block-header">
           <div class="market-block-title">🔢 Over / Under Gol — Seleziona il Range (Match · Casa · Trasferta)</div>
-          <span class="market-badge">Escluse quote troppo vicine a 1 (&lt;1.15)</span>
+          <span class="market-badge">${ouTotList.length} soglie Match · ${ouHomeList.length} soglie Squadra</span>
         </div>
 
         <!-- A) Tutto il Match -->
@@ -1080,7 +1085,7 @@ function renderMarketsForMatch(match) {
           <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
             <strong style="font-size:0.86rem;color:var(--gold);">🤽 Somma Gol Tutto il Match (${esc(homeName)} + ${esc(awayName)})</strong>
             <div style="display:flex;align-items:center;gap:8px;">
-              <label for="selOuMatch" style="font-size:0.76rem;color:var(--text-muted);">Scegli Soglia:</label>
+              <label for="selOuMatch" style="font-size:0.76rem;color:var(--text-muted);">Scegli Soglia (${ouTotList.length} opzioni):</label>
               <select id="selOuMatch" style="width:auto;padding:6px 10px;font-weight:800;"
                 onchange="updateCustomMarketSelection('ouMatchLine', this.value, '${esc(match.id)}')">
                 ${ouTotList.map(r => `
@@ -1102,7 +1107,7 @@ function renderMarketsForMatch(match) {
           <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
             <strong style="font-size:0.86rem;color:#34d399;">🏠 Gol Squadra Casa: ${esc(homeName)}</strong>
             <div style="display:flex;align-items:center;gap:8px;">
-              <label for="selOuHome" style="font-size:0.76rem;color:var(--text-muted);">Scegli Soglia:</label>
+              <label for="selOuHome" style="font-size:0.76rem;color:var(--text-muted);">Scegli Soglia (${ouHomeList.length} opzioni):</label>
               <select id="selOuHome" style="width:auto;padding:6px 10px;font-weight:800;"
                 onchange="updateCustomMarketSelection('ouHomeLine', this.value, '${esc(match.id)}')">
                 ${ouHomeList.map(r => `
@@ -1124,7 +1129,7 @@ function renderMarketsForMatch(match) {
           <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
             <strong style="font-size:0.86rem;color:var(--oppidum-sky);">✈️ Gol Squadra Trasferta: ${esc(awayName)}</strong>
             <div style="display:flex;align-items:center;gap:8px;">
-              <label for="selOuAway" style="font-size:0.76rem;color:var(--text-muted);">Scegli Soglia:</label>
+              <label for="selOuAway" style="font-size:0.76rem;color:var(--text-muted);">Scegli Soglia (${ouAwayList.length} opzioni):</label>
               <select id="selOuAway" style="width:auto;padding:6px 10px;font-weight:800;"
                 onchange="updateCustomMarketSelection('ouAwayLine', this.value, '${esc(match.id)}')">
                 ${ouAwayList.map(r => `
@@ -1142,15 +1147,14 @@ function renderMarketsForMatch(match) {
         </div>
       </div>
 
-      <!-- 2. NUMERO ESATTO DI GOL (SCELTO DALL'UTENTE, MINIMO 1, MAI ZERO) -->
+      <!-- 2. NUMERO ESATTO DI GOL SQUADRA / MATCH (SCELTO DALL'UTENTE, MINIMO 1, MAI ZERO) -->
       <div class="market-block">
         <div class="market-block-header">
-          <div class="market-block-title">🎯 Numero Esatto di Gol (Scegli il Numero · Minimo 1)</div>
-          <span class="market-badge">Inserisci il numero esatto di gol (No 0)</span>
+          <div class="market-block-title">🎯 Numero Esatto di Gol — Match &amp; Squadre (Minimo 1 · No 0)</div>
+          <span class="market-badge">Inserisci il numero esatto di gol</span>
         </div>
 
         <div class="odds-grid scorers-grid">
-          <!-- Gol Esatti Tutto il Match -->
           <div class="scorer-market-row">
             <div class="scorer-info">
               <span class="scorer-name">🤽 Gol Esatti Tutto il Match</span>
@@ -1165,7 +1169,6 @@ function renderMarketsForMatch(match) {
             ${oddButtonHtml(match, `EXACT_GOALS_MATCH_${cs.exactMatchGoals}`, `Match: Esattamente ${cs.exactMatchGoals} Gol`, "Somma esatta gol a fine gara", oddExactMatch)}
           </div>
 
-          <!-- Gol Esatti Squadra Casa -->
           <div class="scorer-market-row">
             <div class="scorer-info">
               <span class="scorer-name">🏠 Gol Esatti ${esc(homeName)}</span>
@@ -1180,7 +1183,6 @@ function renderMarketsForMatch(match) {
             ${oddButtonHtml(match, `EXACT_GOALS_HOME_${cs.exactHomeGoals}`, `${homeName}: Esattamente ${cs.exactHomeGoals} Gol`, "Numero esatto gol squadra Casa", oddExactHome)}
           </div>
 
-          <!-- Gol Esatti Squadra Trasferta -->
           <div class="scorer-market-row">
             <div class="scorer-info">
               <span class="scorer-name">✈️ Gol Esatti ${esc(awayName)}</span>
@@ -1197,26 +1199,45 @@ function renderMarketsForMatch(match) {
         </div>
       </div>
 
-      <!-- 3. HANDICAP CASA O TRASFERTA (SELEZIONA LO SPREAD) -->
+      <!-- 3. HANDICAP GOL — SOLO NEGATIVI (-1.5 .. -10.5) SIA PER CASA CHE PER TRASFERTA -->
       <div class="market-block">
         <div class="market-block-header">
-          <div class="market-block-title">⚖️ Handicap Gol — Casa o Trasferta</div>
-          <span class="market-badge">Seleziona la linea Handicap</span>
+          <div class="market-block-title">⚖️ Handicap Gol (Solo Handicap Negativi · Vittoria con Scarto)</div>
+          <span class="market-badge">Da -1.5 a -10.5 gol</span>
         </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
-          <span style="font-size:0.8rem;color:#cbd5e1;">Scegli il vantaggio/svantaggio gol:</span>
-          <select id="selHcpLine" style="width:auto;padding:6px 10px;font-weight:800;"
-            onchange="updateCustomMarketSelection('handicapHomeLine', this.value, '${esc(match.id)}')">
-            ${hcpList.map(r => `
-              <option value="${r.hcpHome}" ${r.hcpHome === selHcpRow.hcpHome ? "selected" : ""}>
-                Casa ${r.hcpHomeStr} (@${r.oddHome.toFixed(2)}) / Trasferta ${r.hcpAwayStr} (@${r.oddAway.toFixed(2)})
-              </option>
-            `).join("")}
-          </select>
-        </div>
+
         <div class="odds-grid two-cols">
-          ${oddButtonHtml(match, `HCP_HOME_${selHcpRow.hcpHome}`, `1 Handicap Casa (${homeName} ${selHcpRow.hcpHomeStr})`, `Vince con handicap ${selHcpRow.hcpHomeStr} gol`, selHcpRow.oddHome)}
-          ${oddButtonHtml(match, `HCP_AWAY_${selHcpRow.hcpAway}`, `2 Handicap Trasferta (${awayName} ${selHcpRow.hcpAwayStr})`, `Vince con handicap ${selHcpRow.hcpAwayStr} gol`, selHcpRow.oddAway)}
+          <!-- Handicap Negativo Squadra Casa -->
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:10px;">
+              <strong style="font-size:0.84rem;color:var(--gold);">🏠 Handicap ${esc(homeName)} (Casa)</strong>
+              <select style="width:auto;padding:5px 8px;font-weight:800;"
+                onchange="updateCustomMarketSelection('hcpHomeNegLine', this.value, '${esc(match.id)}')">
+                ${hcpNegList.map(r => `
+                  <option value="${r.negLine}" ${r.negLine === selHcpHome.negLine ? "selected" : ""}>
+                    ${r.negLineStr} (Vince di ${r.minGoalsDiff}+ gol) → @${r.oddHomeNeg.toFixed(2)}
+                  </option>
+                `).join("")}
+              </select>
+            </div>
+            ${oddButtonHtml(match, `HCP_HOME_NEG_${selHcpHome.negLine}`, `1 Handicap ${homeName} (${selHcpHome.negLineStr})`, `Vince con almeno ${selHcpHome.minGoalsDiff} gol di scarto`, selHcpHome.oddHomeNeg)}
+          </div>
+
+          <!-- Handicap Negativo Squadra Trasferta -->
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:10px;">
+              <strong style="font-size:0.84rem;color:var(--oppidum-sky);">✈️ Handicap ${esc(awayName)} (Trasferta)</strong>
+              <select style="width:auto;padding:5px 8px;font-weight:800;"
+                onchange="updateCustomMarketSelection('hcpAwayNegLine', this.value, '${esc(match.id)}')">
+                ${hcpNegList.map(r => `
+                  <option value="${r.negLine}" ${r.negLine === selHcpAway.negLine ? "selected" : ""}>
+                    ${r.negLineStr} (Vince di ${r.minGoalsDiff}+ gol) → @${r.oddAwayNeg.toFixed(2)}
+                  </option>
+                `).join("")}
+              </select>
+            </div>
+            ${oddButtonHtml(match, `HCP_AWAY_NEG_${selHcpAway.negLine}`, `2 Handicap ${awayName} (${selHcpAway.negLineStr})`, `Vince con almeno ${selHcpAway.minGoalsDiff} gol di scarto`, selHcpAway.oddAwayNeg)}
+          </div>
         </div>
       </div>
     `;
@@ -1226,8 +1247,8 @@ function renderMarketsForMatch(match) {
     html += `
       <div class="market-block">
         <div class="market-block-header">
-          <div class="market-block-title">🎯 Quote Marcatori Oppidum</div>
-          <span class="market-badge">1+ Gol · Doppietta · Tripletta</span>
+          <div class="market-block-title">🎯 Quote Marcatori Oppidum (1+ / 2+ / 3+ Gol &amp; Gol Esatti Giocatore)</div>
+          <span class="market-badge">Scegli anche il numero esatto di gol di ogni giocatore</span>
         </div>
         <div class="odds-grid scorers-grid">
           ${an.scorerMarkets.map(sc => {
@@ -1236,15 +1257,22 @@ function renderMarketsForMatch(match) {
             const sel3 = isPickSelected(match.id, `SC_${sc.playerId}_3`) ? "selected" : "";
             const matchTitle = match.isHome ? `Oppidum vs ${match.opponent}` : `${match.opponent} vs Oppidum`;
             const disAttr = closed ? "disabled style='opacity:0.45;cursor:not-allowed;'" : "";
+
+            // Numero esatto di gol scelto per questo giocatore (default: 1 gol, min 1)
+            const chosenExact = Math.max(1, parseInt(cs.playerExactGoals[sc.playerId], 10) || 1);
+            const oddExactPlayer = computeExactGoalsOdd(sc.expectedGoals || 0.45, chosenExact);
+            const selExactP = isPickSelected(match.id, `SC_EXACT_${sc.playerId}_${chosenExact}`) ? "selected" : "";
+
             return `
               <div class="scorer-market-row">
                 <div class="scorer-info">
                   <span class="scorer-name">🤽 ${esc(sc.name)}</span>
-                  <span class="scorer-stat-pill">xG ${sc.expectedGoals}</span>
+                  <span class="scorer-stat-pill">${esc(sc.role)} · xG ${sc.expectedGoals}</span>
                 </div>
+                <div style="font-size:0.68rem;color:var(--text-muted);font-weight:700;">Almeno N Gol (1+ / 2+ / 3+):</div>
                 <div class="scorer-odds-mini">
                   <button type="button" class="odd-btn ${sel1}" ${disAttr}
-                    onclick="toggleBetPick('${esc(match.id)}', '${esc(matchTitle)}', 'SC_${sc.playerId}_1', '${esc(sc.name)} Segna 1+', ${sc.odd1Plus})">
+                    onclick="toggleBetPick('${esc(match.id)}', '${esc(matchTitle)}', 'SC_${sc.playerId}_1', '${esc(sc.name)} Segna 1+ Gol', ${sc.odd1Plus})">
                     <span class="odd-label">Segna 1+</span>
                     <span class="odd-val">${sc.odd1Plus.toFixed(2)}</span>
                   </button>
@@ -1257,6 +1285,21 @@ function renderMarketsForMatch(match) {
                     onclick="toggleBetPick('${esc(match.id)}', '${esc(matchTitle)}', 'SC_${sc.playerId}_3', '${esc(sc.name)} 3+ Gol', ${sc.odd3Plus})">
                     <span class="odd-label">3+ Gol</span>
                     <span class="odd-val">${sc.odd3Plus.toFixed(2)}</span>
+                  </button>
+                </div>
+
+                <!-- GOL ESATTI DEL GIOCATORE IN PARTITA -->
+                <div style="border-top:1px dashed var(--border);padding-top:6px;margin-top:4px;">
+                  <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;margin-bottom:6px;">
+                    <span style="font-size:0.7rem;color:var(--gold);font-weight:700;">🎯 Gol Esatti in Partita (min 1):</span>
+                    <input type="number" min="1" max="15" value="${chosenExact}"
+                      style="width:58px;padding:4px 6px;font-weight:800;text-align:center;font-size:0.82rem;"
+                      onchange="updateCustomMarketSelection('playerExactGoals', this.value, '${esc(match.id)}', '${esc(sc.playerId)}')" />
+                  </div>
+                  <button type="button" class="odd-btn ${selExactP}" ${disAttr}
+                    onclick="toggleBetPick('${esc(match.id)}', '${esc(matchTitle)}', 'SC_EXACT_${sc.playerId}_${chosenExact}', '${esc(sc.name)}: Esattamente ${chosenExact} Gol', ${oddExactPlayer})">
+                    <span class="odd-label">Esattamente ${chosenExact} Gol</span>
+                    <span class="odd-val">${oddExactPlayer.toFixed(2)}</span>
                   </button>
                 </div>
               </div>
