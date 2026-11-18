@@ -9,11 +9,11 @@
    ============================================================ */
 
 const STORAGE_KEYS = {
-  USERS: "oppidum_girone6_users_v3",
-  CURRENT_USER: "oppidum_girone6_current_user_v3",
-  BETS: "oppidum_girone6_bets_v3",
-  MATCHES: "oppidum_girone6_matches_v3",
-  APPEARANCES_REF: "oppidum_girone6_hist_apps_v3"
+  USERS: "oppidum_girone6_users_v4",
+  CURRENT_USER: "oppidum_girone6_current_user_v4",
+  BETS: "oppidum_girone6_bets_v4",
+  MATCHES: "oppidum_girone6_matches_v4",
+  APPEARANCES_REF: "oppidum_girone6_hist_apps_v4"
 };
 
 const STARTING_CREDITS = 100;
@@ -441,10 +441,42 @@ function getSeasonMatches() {
   if (raw) {
     try {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) return parsed;
+      if (Array.isArray(parsed) && parsed.length) return parsed;
     } catch (e) {}
   }
-  return [];
+  const allIds = getAllRosterIds();
+  const exampleMatches = [
+    {
+      id: "g6_example_1",
+      title: "Partita di Esempio — Girone 6",
+      date: "Calendario in uscita · Piscina Terramaini",
+      opponent: "R.N. CAGLIARI",
+      isHome: true,
+      boostOppidum: 1.15,
+      status: "open",
+      scoreUs: null,
+      scoreThem: null,
+      presentPlayerIds: [...allIds],
+      playerGoals: {},
+      analysis: generateAiOddsForMatch("R.N. CAGLIARI", true, 1.15, allIds)
+    },
+    {
+      id: "g6_example_2",
+      title: "Partita di Esempio — Girone 6",
+      date: "Calendario in uscita · Piscina Terramaini",
+      opponent: "ANACONDA PALLANUOTO",
+      isHome: true,
+      boostOppidum: 1.15,
+      status: "open",
+      scoreUs: null,
+      scoreThem: null,
+      presentPlayerIds: [...allIds],
+      playerGoals: {},
+      analysis: generateAiOddsForMatch("ANACONDA PALLANUOTO", true, 1.15, allIds)
+    }
+  ];
+  localStorage.setItem(STORAGE_KEYS.MATCHES, JSON.stringify(exampleMatches));
+  return exampleMatches;
 }
 
 function saveSeasonMatches(matches) {
