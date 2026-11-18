@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>OPPIDUM BET — Scommesse Goliardiche & Quote AI | Oppidum Sport Cagliari ASD</title>
-  <meta name="description" content="Il portale goliardico ufficiale di scommesse, quote AI e statistiche Serie C della squadra di pallanuoto Oppidum Sport Cagliari ASD." />
+  <title>OPPIDUM BET — Nuova Stagione Serie C | Oppidum Sport Cagliari ASD</title>
+  <meta name="description" content="Scommesse goliardiche, quote AI e classifica scommettitori per la nuova stagione di Serie C dell'Oppidum Sport Cagliari ASD." />
   <link rel="icon" href="images/logo.png" type="image/png" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
@@ -18,34 +18,28 @@
           <img src="images/logo.png" alt="Logo Oppidum Sport Cagliari" class="brand-logo" />
         </div>
         <div class="brand-text">
-          <h1>OPPIDUM BET <span class="brand-badge">SERIE C</span></h1>
-          <div class="brand-sub">Bookmaker Goliardico Ufficiale · Piscina Terramaini Cagliari</div>
+          <h1>OPPIDUM BET <span class="brand-badge">NUOVA STAGIONE</span></h1>
+          <div class="brand-sub">Bookmaker Goliardico · Oppidum Sport Cagliari ASD</div>
         </div>
       </a>
 
       <nav class="nav-tabs" aria-label="Menu principale">
         <button type="button" class="nav-tab active" data-tab="betting" onclick="switchTab('betting')">
-          🎯 Palinsesto &amp; Quote
-        </button>
-        <button type="button" class="nav-tab" data-tab="oracle" onclick="switchTab('oracle')">
-          🤖 Oracolo AI &amp; Crea Partite
-        </button>
-        <button type="button" class="nav-tab" data-tab="roster" onclick="switchTab('roster')">
-          🤽 Rosa &amp; Marcatori
-        </button>
-        <button type="button" class="nav-tab" data-tab="league" onclick="switchTab('league')">
-          📅 Serie C (18 Giornate)
+          🎯 Scommesse &amp; Quote AI
         </button>
         <button type="button" class="nav-tab" data-tab="leaderboard" onclick="switchTab('leaderboard')">
-          🏆 Classifica &amp; Schedine
+          🏆 Classifica Scommettitori
+        </button>
+        <button type="button" class="nav-tab" data-tab="roster" onclick="switchTab('roster')">
+          🤽 Rosa &amp; Presenze Partite
+        </button>
+        <button type="button" class="nav-tab" data-tab="oracle" onclick="switchTab('oracle')">
+          🤖 Crea Partita &amp; Gestione Quote
         </button>
       </nav>
 
-      <div class="wallet-bar">
-        <select id="activeUserSelect" class="wallet-select" aria-label="Seleziona Scommettitore" onchange="setActiveUserId(this.value)"></select>
-        <span id="activeUserBalance" class="wallet-balance">250 🍺</span>
-        <button type="button" class="btn-icon-sm" onclick="topUpActiveUser()" title="Ricarica 100 Birre/Fiches">+100 🍺</button>
-      </div>
+      <!-- LOGIN / PROFILO ATTIVO -->
+      <div id="authUserWidget"></div>
     </div>
   </header>
 
@@ -53,42 +47,42 @@
   <section class="hero-banner" id="top">
     <div class="hero-card">
       <div>
-        <div class="hero-tag">🔴🔵 Oppidum Sport Cagliari ASD · Stagione Serie C</div>
-        <h2>Il Bookmaker Goliardico della <span>Banda di Terramaini</span></h2>
+        <div class="hero-tag">🔴🔵 Nuova Stagione Serie C · Piscina Terramaini Cagliari</div>
+        <h2>Scommetti sulla Nuova Stagione dell'<span>Oppidum Cagliari</span></h2>
         <p>
-          Quote calcolate dall'<strong>Intelligenza Artificiale (Modello Poisson)</strong> sulle 18 giornate di Serie C Maschile Girone 5,
-          aggiornate con la <strong>nuova rosa ufficiale</strong> (con i portieri <strong>Atzeni</strong> e <strong>Faret</strong>, senza gli ex Fortini e Frau).
-          Punta in <strong>Birre/Fiches 🍺</strong>, crea nuove partite e condividi le schedine sul gruppo WhatsApp!
+          Accedi con il tuo nome (senza password complicate): <strong>partiamo tutti con 100 Crediti 🪙</strong>!
+          L'Intelligenza Artificiale calcola le quote delle prossime partite e dei marcatori della nuova rosa
+          (con i portieri <strong>Atzeni</strong> e <strong>Faret</strong>, <strong>Pittotti</strong> e il nuovo acquisto <strong>Olla</strong>).
         </p>
         <div class="hero-actions">
+          <button type="button" class="btn btn-gold" onclick="openLoginModal()">
+            🔑 Accedi / Entra con 100 Crediti
+          </button>
           <button type="button" class="btn btn-primary" onclick="switchTab('betting')">
-            🔥 Scommetti Ora
+            🎯 Vai alle Quote
           </button>
-          <button type="button" class="btn btn-gold" onclick="switchTab('oracle')">
-            🤖 Genera Quote AI Nuova Partita
-          </button>
-          <button type="button" class="btn btn-outline" onclick="switchTab('roster')">
-            📊 Tabella 149 Gol Serie C
+          <button type="button" class="btn btn-outline" onclick="switchTab('leaderboard')">
+            🏆 Classifica Scommettitori
           </button>
         </div>
       </div>
 
       <div class="hero-kpis">
         <div class="kpi-box">
-          <div class="kpi-val">149 ⚽</div>
-          <div class="kpi-lbl">Gol segnati in 18 Giornate Serie C</div>
+          <div class="kpi-val">100 🪙</div>
+          <div class="kpi-lbl">Crediti di partenza uguali per tutti</div>
         </div>
         <div class="kpi-box">
-          <div class="kpi-val">Melis 34</div>
-          <div class="kpi-lbl">Capocannoniere (Piras 24 · De Giudici 18)</div>
+          <div class="kpi-val">19 Giocatori</div>
+          <div class="kpi-lbl">Rosa Ufficiale Nuova Stagione</div>
         </div>
         <div class="kpi-box">
           <div class="kpi-val">Atzeni &amp; Faret</div>
-          <div class="kpi-lbl">I 2 Portieri Ufficiali in Rosa</div>
+          <div class="kpi-lbl">Portieri + Nuovi: Pittotti &amp; Olla</div>
         </div>
         <div class="kpi-box">
-          <div class="kpi-val">100% Goliardia</div>
-          <div class="kpi-lbl">Zero soldi veri · Solo gloria e Ichnusa 🍺</div>
+          <div class="kpi-val">Quote AI</div>
+          <div class="kpi-lbl">Calcolate sui presenti di ogni gara</div>
         </div>
       </div>
     </div>
@@ -97,21 +91,20 @@
   <!-- MAIN WORKSPACE -->
   <main class="app-container" id="mainWorkspace">
 
-    <!-- LEFT / MAIN COLUMN -->
     <div class="workspace-main">
 
       <!-- ========================================================
-           TAB 1: PALINSESTO & QUOTE AI
+           TAB 1: SCOMMESSE & QUOTE AI (NUOVA STAGIONE)
            ======================================================== -->
       <section class="tab-panel active" id="tab-betting">
         <div class="panel-card">
           <div class="panel-header">
             <div>
-              <h3 class="panel-title">🎯 Seleziona la Partita Futura</h3>
-              <p class="panel-sub">Clicca su un match per vedere tutte le quote calcolate dall'Oracolo AI di Terramaini</p>
+              <h3 class="panel-title">🎯 Prossime Partite — Nuova Stagione</h3>
+              <p class="panel-sub">Scegli la partita e clicca sulle quote per comporre la tua schedina</p>
             </div>
             <button type="button" class="btn btn-navy btn-sm" onclick="switchTab('oracle')">
-              ➕ Aggiungi / Personalizza Partita
+              ➕ Crea / Modifica Partita
             </button>
           </div>
 
@@ -121,235 +114,40 @@
           <!-- FILTRI CATEGORIE MERCATI -->
           <div class="market-category-tabs">
             <button type="button" class="market-cat-btn active" data-cat="all" onclick="setMarketCategory('all')">
-              🔥 Tutti i Mercati
+              🔥 Tutte le Quote
             </button>
             <button type="button" class="market-cat-btn" data-cat="main" onclick="setMarketCategory('main')">
               🤽 1X2, Doppia Chance &amp; Over/Under
             </button>
             <button type="button" class="market-cat-btn" data-cat="scorers" onclick="setMarketCategory('scorers')">
-              🎯 Marcatori Oppidum (Rosa Attiva)
+              🎯 Marcatori (Rosa Nuova Stagione)
             </button>
             <button type="button" class="market-cat-btn" data-cat="gk" onclick="setMarketCategory('gk')">
-              🧤 Speciale Portieri (Atzeni &amp; Faret)
+              🧤 Portieri (Atzeni &amp; Faret)
             </button>
             <button type="button" class="market-cat-btn" data-cat="goliardic" onclick="setMarketCategory('goliardic')">
-              🍺 Quote Goliardiche Spogliatoio
+              🍺 Quote Goliardiche
             </button>
           </div>
 
-          <!-- CONTENITORE MERCATI -->
           <div id="marketsContainer"></div>
         </div>
       </section>
 
       <!-- ========================================================
-           TAB 2: ORACOLO AI & CREATORE PARTITE FUTURE
-           ======================================================== -->
-      <section class="tab-panel" id="tab-oracle">
-        <div class="panel-card">
-          <div class="panel-header">
-            <div>
-              <h3 class="panel-title">🤖 Genera Nuova Partita Futura con Quote AI</h3>
-              <p class="panel-sub">
-                Scegli l'avversario (del Girone 5 o personalizzato): l'AI analizza le 90 partite della scorsa stagione,
-                scorpora i gol degli ex Fortini e Frau e calcola automaticamente quote 1X2, Over/Under, Marcatori e Portieri!
-              </p>
-            </div>
-          </div>
-
-          <form onsubmit="createNewAiMatch(event)">
-            <div class="form-grid">
-              <div class="field">
-                <label for="newMatchOpponent">Avversario Serie C</label>
-                <select id="newMatchOpponent" onchange="document.getElementById('customOppField').style.display = this.value === 'CUSTOM' ? 'flex' : 'none'">
-                  <option value="Promogest Quartu SE">Promogest Quartu SE</option>
-                  <option value="RN Cagliari">RN Cagliari</option>
-                  <option value="Anaconda PN">Anaconda PN</option>
-                  <option value="RN Roma Vis Nova">RN Roma Vis Nova</option>
-                  <option value="Aqvaroma">Aqvaroma</option>
-                  <option value="Imperium">Imperium</option>
-                  <option value="Castelli Romani">Castelli Romani</option>
-                  <option value="Bellator Frusino">Bellator Frusino</option>
-                  <option value="De Virtute Roma">De Virtute Roma</option>
-                  <option value="CUSTOM">✨ Altro Avversario / Amichevole...</option>
-                </select>
-              </div>
-
-              <div class="field" id="customOppField" style="display:none;">
-                <label for="newMatchCustomOpponent">Nome Nuovo Avversario</label>
-                <input type="text" id="newMatchCustomOpponent" placeholder="es. Pallanuoto Alghero / Rappresentativa" />
-              </div>
-
-              <div class="field">
-                <label for="newMatchVenue">Vasca (Casa / Trasferta)</label>
-                <select id="newMatchVenue">
-                  <option value="home">🏠 In Casa (Piscina Terramaini — Cagliari)</option>
-                  <option value="away">✈️ In Trasferta</option>
-                </select>
-              </div>
-
-              <div class="field">
-                <label for="newMatchDate">Data e Orario</label>
-                <input type="text" id="newMatchDate" placeholder="es. Sabato 28 Nov · Ore 15:00" value="Sabato · Ore 15:00" />
-              </div>
-
-              <div class="field">
-                <label for="newMatchComp">Competizione / Giornata</label>
-                <input type="text" id="newMatchComp" value="Serie C Maschile — Girone 5" />
-              </div>
-
-              <div class="field">
-                <label for="newMatchBoost">Stato di Forma / Ottimismo AI Oppidum</label>
-                <select id="newMatchBoost">
-                  <option value="1.00">📊 Neutro Puro (100% Statistica Storica)</option>
-                  <option value="1.15" selected>🔥 Carica Terramaini (+15% Boost Rossoblù)</option>
-                  <option value="1.30">🚀 Euforia Spogliatoio (+30% Super Forma Oppidum)</option>
-                </select>
-              </div>
-            </div>
-
-            <button type="submit" class="btn btn-gold">
-              ⚡ Calcola Quote con l'AI e Pubblica nel Palinsesto
-            </button>
-          </form>
-        </div>
-
-        <div class="panel-card">
-          <div class="panel-header">
-            <div>
-              <h3 class="panel-title">📋 Partite Future Attive nel Palinsesto</h3>
-              <p class="panel-sub">Condividi le quote su WhatsApp o clicca su "Personalizza Quote" per ritoccarle a mano</p>
-            </div>
-          </div>
-          <div id="oracleMatchesList"></div>
-        </div>
-
-        <div class="panel-card" id="customOddsEditorSection">
-          <div class="panel-header">
-            <div>
-              <h3 class="panel-title">✏️ Editor Quote Manuali &amp; Aggiunta Scommesse Goliardiche</h3>
-              <p class="panel-sub">Vuoi ritoccare una quota calcolata dall'AI o inventare una scommessa speciale per sabato? Fallo qui!</p>
-            </div>
-          </div>
-          <div id="customOddsEditorBody"></div>
-        </div>
-      </section>
-
-      <!-- ========================================================
-           TAB 3: ROSA ATTUALE & TABELLA MARCATORI 18 GIORNATE
-           ======================================================== -->
-      <section class="tab-panel" id="tab-roster">
-        <div class="panel-card">
-          <div class="panel-header">
-            <div>
-              <h3 class="panel-title">🤽 Rosa Oppidum Sport Cagliari &amp; Statistiche Individuali</h3>
-              <p class="panel-sub">
-                Rosa attiva con i portieri <strong>ATZENI</strong> e <strong>FARET</strong>.
-                <em>Nota: Fortini (20 gol) e Frau (4 gol) non fanno più parte della rosa attuale e sono esclusi dalle quote marcatori future.</em>
-              </p>
-            </div>
-            <div style="display:flex;gap:8px;">
-              <button type="button" class="btn btn-navy btn-sm" onclick="toggleRosterExFilter(false)">
-                ✅ Solo Rosa Attuale (17)
-              </button>
-              <button type="button" class="btn btn-outline btn-sm" onclick="toggleRosterExFilter(true)">
-                📦 Mostra anche Ex 2026 (Fortini &amp; Frau)
-              </button>
-            </div>
-          </div>
-
-          <div class="roster-grid" id="rosterCardsGrid"></div>
-        </div>
-
-        <div class="panel-card">
-          <div class="panel-header">
-            <div>
-              <h3 class="panel-title">📊 Tabella Ufficiale Marcatori Serie C — Tutte le 18 Giornate</h3>
-              <p class="panel-sub">
-                Dettaglio gol partita per partita (Andata e Ritorno):
-                <strong>VIS | ANA | AQU | IMP | BEL | DEV | CR | RN | PG</strong> · Totale di squadra: <strong>149 gol</strong>
-              </p>
-            </div>
-          </div>
-
-          <div class="table-wrap">
-            <table class="matrix-table">
-              <thead id="scorersMatrixHead"></thead>
-              <tbody id="scorersMatrixBody"></tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      <!-- ========================================================
-           TAB 4: CLASSIFICA SERIE C & CALENDARIO 18 GIORNATE
-           ======================================================== -->
-      <section class="tab-panel" id="tab-league">
-        <div class="panel-card">
-          <div class="panel-header">
-            <div>
-              <h3 class="panel-title">🏆 Classifica Serie C Maschile — Girone 5 (C.R. Sardegna)</h3>
-              <p class="panel-sub">Calcolata sui risultati ufficiali di tutte le 90 partite delle 18 giornate</p>
-            </div>
-          </div>
-
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Pos</th>
-                  <th>Squadra</th>
-                  <th>Pti</th>
-                  <th>G</th>
-                  <th>V</th>
-                  <th>N</th>
-                  <th>P</th>
-                  <th>GF</th>
-                  <th>GS</th>
-                  <th>DR</th>
-                </tr>
-              </thead>
-              <tbody id="serieCStandingsBody"></tbody>
-            </table>
-          </div>
-        </div>
-
-        <div class="panel-card">
-          <div class="panel-header">
-            <div>
-              <h3 class="panel-title">📅 Risultati Completi delle 18 Giornate (Stagione 2026)</h3>
-              <p class="panel-sub">Le partite dell'Oppidum Sport Cagliari sono evidenziate in rossoblù</p>
-            </div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;">
-              <button type="button" class="btn btn-primary btn-sm" onclick="setMatchdayFilterTeam('Oppidum S. Cagliari')">
-                🔴🔵 Solo Partite Oppidum (18)
-              </button>
-              <button type="button" class="btn btn-outline btn-sm" onclick="setMatchdayFilterTeam('ALL')">
-                📋 Tutte le 90 Partite del Girone
-              </button>
-            </div>
-          </div>
-
-          <div class="matchdays-grid" id="allMatchdaysGrid"></div>
-        </div>
-      </section>
-
-      <!-- ========================================================
-           TAB 5: CLASSIFICA SCOMMETTITORI & STORICO SCHEDINE
+           TAB 2: CLASSIFICA SCOMMETTITORI & SCHEDINE
            ======================================================== -->
       <section class="tab-panel" id="tab-leaderboard">
         <div class="panel-card">
           <div class="panel-header">
             <div>
-              <h3 class="panel-title">🏆 Classifica Scommettitori ("Trofeo Ichnusa")</h3>
-              <p class="panel-sub">Aggiungi i compagni di squadra, sfida lo spogliatoio e scala la classifica delle Birre/Fiches 🍺</p>
+              <h3 class="panel-title">🏆 Classifica Scommettitori (Chi ha più Punti / Crediti)</h3>
+              <p class="panel-sub">Tutti partono da 100 Crediti. Chi indovina le schedine scala la vetta della società!</p>
             </div>
+            <button type="button" class="btn btn-gold btn-sm" onclick="openLoginModal()">
+              ➕ Nuovo Scommettitore / Cambia Profilo
+            </button>
           </div>
-
-          <form onsubmit="addBettorUser(event)" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;">
-            <input type="text" id="newBettorName" placeholder="Nome o soprannome (es. Bomber Melis, Mister Chicco, Atzeni...)" style="max-width:360px;" />
-            <button type="submit" class="btn btn-gold">➕ Aggiungi Scommettitore (200 🍺)</button>
-          </form>
 
           <div class="table-wrap">
             <table>
@@ -357,9 +155,11 @@
                 <tr>
                   <th>Pos</th>
                   <th>Scommettitore</th>
-                  <th>Saldo Birre / Fiches</th>
+                  <th>Punti / Crediti</th>
+                  <th>Bilancio</th>
                   <th>Schedine Vinte</th>
                   <th>Schedine Perse</th>
+                  <th>Ricarica</th>
                 </tr>
               </thead>
               <tbody id="bettorsLeaderboardBody"></tbody>
@@ -370,23 +170,149 @@
         <div class="panel-card">
           <div class="panel-header">
             <div>
-              <h3 class="panel-title">🎫 Bacheca Schedine Giocate (Referta Vinte / Perse)</h3>
-              <p class="panel-sub">A fine partita clicca su "✅ Segna Vinta" per accreditare subito la vincita in Birre 🍺 allo scommettitore!</p>
+              <h3 class="panel-title">🎫 Tutte le Schedine Giocate</h3>
+              <p class="panel-sub">A fine partita clicca su "✅ Vinta" o "❌ Persa" per aggiornare automaticamente i punti dello scommettitore!</p>
             </div>
           </div>
           <div id="allSlipsHistoryBox"></div>
         </div>
       </section>
 
+      <!-- ========================================================
+           TAB 3: ROSA NUOVA STAGIONE & REGISTRO PRESENZE
+           ======================================================== -->
+      <section class="tab-panel" id="tab-roster">
+        <div class="panel-card">
+          <div class="panel-header">
+            <div>
+              <h3 class="panel-title">🤽 Rosa Ufficiale Nuova Stagione (19 Giocatori)</h3>
+              <p class="panel-sub">
+                Include i portieri <strong>ATZENI</strong> e <strong>FARET</strong>, <strong>PITTOTTI</strong> e il nuovo innesto <strong>OLLA</strong>.
+              </p>
+            </div>
+          </div>
+
+          <div class="roster-grid" id="rosterCardsGrid"></div>
+        </div>
+
+        <div class="panel-card">
+          <div class="panel-header">
+            <div>
+              <h3 class="panel-title">📋 Registro Presenze &amp; Gol per Partita (Nuova Stagione)</h3>
+              <p class="panel-sub">
+                Spunta quali giocatori hanno giocato (o sono convocati) in ogni partita e inserisci i gol segnati:
+                le quote AI dei marcatori si aggiornano automaticamente sui giocatori presenti!
+              </p>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <table class="matrix-table">
+              <thead id="presenzeMatrixHead"></thead>
+              <tbody id="presenzeMatrixBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================================
+           TAB 4: CREA PARTITA, GESTIONE QUOTE AI & RISULTATI
+           ======================================================== -->
+      <section class="tab-panel" id="tab-oracle">
+        <div class="panel-card">
+          <div class="panel-header">
+            <div>
+              <h3 class="panel-title">🤖 Crea Nuova Partita Futura (Calcolo Quote AI)</h3>
+              <p class="panel-sub">
+                Aggiungi una partita della nuova stagione: l'AI usa i dati di riferimento in memoria per calcolare automaticamente tutte le quote!
+              </p>
+            </div>
+          </div>
+
+          <form onsubmit="createNewAiMatch(event)">
+            <div class="form-grid">
+              <div class="field">
+                <label for="newMatchOpponent">Avversario</label>
+                <select id="newMatchOpponent" onchange="document.getElementById('customOppField').style.display = this.value === 'CUSTOM' ? 'flex' : 'none'">
+                  <option value="Promogest Quartu SE">Promogest Quartu SE</option>
+                  <option value="RN Cagliari">RN Cagliari</option>
+                  <option value="Anaconda PN">Anaconda PN</option>
+                  <option value="RN Roma Vis Nova">RN Roma Vis Nova</option>
+                  <option value="Aqvaroma">Aqvaroma</option>
+                  <option value="Imperium">Imperium</option>
+                  <option value="Castelli Romani">Castelli Romani</option>
+                  <option value="Bellator Frusino">Bellator Frusino</option>
+                  <option value="De Virtute Roma">De Virtute Roma</option>
+                  <option value="CUSTOM">✨ Altro Avversario...</option>
+                </select>
+              </div>
+
+              <div class="field" id="customOppField" style="display:none;">
+                <label for="newMatchCustomOpponent">Nome Avversario</label>
+                <input type="text" id="newMatchCustomOpponent" placeholder="Nome squadra avversaria" />
+              </div>
+
+              <div class="field">
+                <label for="newMatchVenue">Casa / Trasferta</label>
+                <select id="newMatchVenue">
+                  <option value="home">🏠 In Casa (Piscina Terramaini)</option>
+                  <option value="away">✈️ In Trasferta</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="newMatchDate">Data e Ora</label>
+                <input type="text" id="newMatchDate" placeholder="es. Sabato · Ore 15:00" value="Sabato · Ore 15:00" />
+              </div>
+
+              <div class="field">
+                <label for="newMatchComp">Giornata / Torneo</label>
+                <input type="text" id="newMatchComp" value="Nuova Stagione — Serie C" />
+              </div>
+
+              <div class="field">
+                <label for="newMatchBoost">Fiducia AI Oppidum</label>
+                <select id="newMatchBoost">
+                  <option value="1.00">📊 Equilibrata</option>
+                  <option value="1.15" selected>🔥 Fattore Terramaini (+15%)</option>
+                  <option value="1.30">🚀 Super Forma Oppidum (+30%)</option>
+                </select>
+              </div>
+            </div>
+
+            <button type="submit" class="btn btn-gold">
+              ⚡ Genera Quote AI per la Partita
+            </button>
+          </form>
+        </div>
+
+        <div class="panel-card">
+          <div class="panel-header">
+            <div>
+              <h3 class="panel-title">📋 Gestione Partite della Nuova Stagione</h3>
+              <p class="panel-sub">Seleziona una partita per ritoccare le quote, aggiungere scommesse goliardiche o inserire il risultato finale</p>
+            </div>
+          </div>
+          <div id="oracleMatchesList"></div>
+        </div>
+
+        <div class="panel-card" id="customOddsEditorSection">
+          <div class="panel-header">
+            <div>
+              <h3 class="panel-title">✏️ Modifica Quote / Aggiungi Scommesse / Referta Risultato</h3>
+            </div>
+          </div>
+          <div id="customOddsEditorBody"></div>
+        </div>
+      </section>
+
     </div>
 
-    <!-- RIGHT SIDEBAR: SCHEDINA INTERATTIVA (BET SLIP) -->
+    <!-- RIGHT SIDEBAR: SCHEDINA INTERATTIVA -->
     <aside class="betslip-sidebar" id="betslipSidebar">
       <div class="betslip-card">
         <div class="betslip-header">
-          <div class="betslip-title">
-            🎫 La Tua Schedina
-          </div>
+          <div class="betslip-title">🎫 La Tua Schedina</div>
           <span class="betslip-count" id="betslipCount">0</span>
         </div>
         <div id="betslipBody"></div>
@@ -395,16 +321,39 @@
 
   </main>
 
+  <!-- MODAL DI LOGIN SEMPLICE (SENZA PASSWORD COMPLICATE) -->
+  <div class="modal-backdrop" id="loginModal" onclick="if(event.target===this) closeLoginModal()">
+    <div class="modal-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <h3 style="font-family:'Space Grotesk',sans-serif;font-size:1.25rem;">🔑 Accesso Scommettitore</h3>
+        <button type="button" class="bs-remove" onclick="closeLoginModal()" style="font-size:1.2rem;">✕</button>
+      </div>
+      <p class="panel-sub" style="margin-bottom:14px;">
+        Inserisci il tuo nome o soprannome per entrare. Se è la tua prima volta, parti subito con <strong>100 Crediti 🪙</strong>!
+      </p>
+      <form onsubmit="handleSimpleLogin(event)" style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px;">
+        <div class="field">
+          <label for="loginUsernameInput">Il tuo Nome o Soprannome</label>
+          <input type="text" id="loginUsernameInput" placeholder="es. Filippo, Melis, Atzeni, Olla..." required />
+        </div>
+        <button type="submit" class="btn btn-gold btn-block">
+          🚀 Entra e Gioca (100 Crediti)
+        </button>
+      </form>
+      <div id="existingUsersQuickList"></div>
+    </div>
+  </div>
+
   <!-- TOAST CONTAINER -->
   <div id="toastContainer"></div>
 
   <!-- FOOTER -->
   <footer>
     <p>
-      <strong>OPPIDUM BET</strong> — Portale Goliardico Amatoriale per <strong>Oppidum Sport Cagliari ASD</strong> (Piscina Terramaini, Via Roberto Pisano - Cagliari).
+      <strong>OPPIDUM BET</strong> — Nuova Stagione Serie C · <strong>Oppidum Sport Cagliari ASD</strong>
     </p>
     <p style="margin-top:6px;">
-      ⚠️ Gioco esclusivamente goliardico e gratuito tra compagni di squadra con fiches virtuali (🍺). Nessun denaro reale coinvolto.
+      ⚠️ Gioco goliardico gratuito tra compagni di squadra con crediti virtuali (🪙). Nessun denaro reale coinvolto.
     </p>
   </footer>
 
