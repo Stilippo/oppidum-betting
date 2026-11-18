@@ -9,11 +9,11 @@
    ============================================================ */
 
 const STORAGE_KEYS = {
-  USERS: "oppidum_girone6_users_v2",
-  CURRENT_USER: "oppidum_girone6_current_user_v2",
-  BETS: "oppidum_girone6_bets_v2",
-  MATCHES: "oppidum_girone6_matches_v2",
-  APPEARANCES_REF: "oppidum_girone6_hist_apps_v2"
+  USERS: "oppidum_girone6_users_v3",
+  CURRENT_USER: "oppidum_girone6_current_user_v3",
+  BETS: "oppidum_girone6_bets_v3",
+  MATCHES: "oppidum_girone6_matches_v3",
+  APPEARANCES_REF: "oppidum_girone6_hist_apps_v3"
 };
 
 const STARTING_CREDITS = 100;
@@ -115,11 +115,7 @@ function getUsers() {
       if (Array.isArray(list)) return list;
     } catch (e) {}
   }
-  const initialUsers = [
-    { id: "u_filippo", name: "Filippo", credits: STARTING_CREDITS, wins: 0, losses: 0, totalStaked: 0, totalWon: 0 }
-  ];
-  localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(initialUsers));
-  return initialUsers;
+  return [];
 }
 
 function saveUsers(users) {
@@ -445,30 +441,10 @@ function getSeasonMatches() {
   if (raw) {
     try {
       const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length) return parsed;
+      if (Array.isArray(parsed)) return parsed;
     } catch (e) {}
   }
-  const allIds = getAllRosterIds();
-  const opponents = GIRONE_6_TEAMS.filter(t => t !== "OPPIDUM SPORT CAGLIARI");
-
-  // Pre-carichiamo le 9 avversarie ufficiali del Girone 6 (con data "In attesa di calendario")
-  const initialMatches = opponents.map((opp, idx) => ({
-    id: `g6_match_${idx + 1}`,
-    title: `Girone 6 — Sfida vs ${opp}`,
-    date: "Data da definire (Calendario in uscita)",
-    opponent: opp,
-    isHome: true,
-    boostOppidum: 1.15,
-    status: "open", // open | settled
-    scoreUs: null,
-    scoreThem: null,
-    presentPlayerIds: [...allIds],
-    playerGoals: {},
-    analysis: generateAiOddsForMatch(opp, true, 1.15, allIds)
-  }));
-
-  localStorage.setItem(STORAGE_KEYS.MATCHES, JSON.stringify(initialMatches));
-  return initialMatches;
+  return [];
 }
 
 function saveSeasonMatches(matches) {
@@ -532,7 +508,7 @@ function switchTab(tabId) {
   });
   const container = document.getElementById("mainWorkspace");
   if (container) {
-    const showSidebar = (tabId === "betting" || tabId === "oracle");
+    const showSidebar = (tabId === "betting");
     container.classList.toggle("full-width", !showSidebar);
     const sidebar = document.getElementById("betslipSidebar");
     if (sidebar) sidebar.style.display = showSidebar ? "block" : "none";
@@ -546,14 +522,27 @@ function renderBettingTab() {
   const allMatches = getSeasonMatches();
   const openMatches = allMatches.filter(m => m.status === "open");
 
+  const catTabs = document.querySelector(".market-category-tabs");
+
   if (!openMatches.length) {
-    document.getElementById("matchSelectorBar").innerHTML = `
-      <div class="panel-sub">Nessuna partita futura aperta. Creane subito una nella scheda <strong>🤖 Crea Partita &amp; Quote AI</strong>!</div>
+    document.getElementById("matchSelectorBar").innerHTML = "";
+    document.getElementById("featuredMatchBox").innerHTML = `
+      <div style="text-align:center;padding:28px 16px;">
+        <div style="font-size:2.4rem;margin-bottom:10px;">📅</div>
+        <h4 style="font-family:'Space Grotesk',sans-serif;font-size:1.25rem;margin-bottom:8px;">
+          In attesa del Calendario Ufficiale — Serie C Girone 6
+        </h4>
+        <p class="panel-sub" style="max-width:540px;margin:0 auto;">
+          Le partite e le relative quote calcolate dall'AI saranno disponibili non appena verrà pubblicato il calendario ufficiale della stagione.
+        </p>
+      </div>
     `;
-    document.getElementById("featuredMatchBox").innerHTML = "";
     document.getElementById("marketsContainer").innerHTML = "";
+    if (catTabs) catTabs.style.display = "none";
     return;
   }
+
+  if (catTabs) catTabs.style.display = "flex";
 
   if (!appState.selectedMatchId || !openMatches.some(m => m.id === appState.selectedMatchId)) {
     appState.selectedMatchId = openMatches[0].id;
@@ -1012,21 +1001,31 @@ function renderLeaderboardTab() {
   const sorted = [...users].sort((a, b) => b.credits - a.credits);
   const lbBody = document.getElementById("bettorsLeaderboardBody");
   if (lbBody) {
-    lbBody.innerHTML = sorted.map((u, idx) => {
-      const medal = idx === 0 ? "🥇 1°" : idx === 1 ? "🥈 2°" : idx === 2 ? "🥉 3°" : `${idx + 1}°`;
-      const net = u.credits - STARTING_CREDITS;
-      const netStr = net > 0 ? `+${net}` : `${net}`;
-      return `
+    if (!sorted.length) {
+      lbBody.innerHTML = `
         <tr>
-          <td style="font-weight:900;font-size:1rem;">${medal}</td>
-          <td><strong>👤 ${esc(u.name)}</strong></td>
-          <td style="color:var(--gold);font-weight:900;font-size:1.05rem;">${u.credits} Crediti 🪙</td>
-          <td style="color:${net >= 0 ? '#34d399' : '#f87171'};font-weight:800;">${netStr}</td>
-          <td style="color:#34d399;font-weight:700;">${u.wins || 0}</td>
-          <td style="color:#f87171;font-weight:700;">${u.losses || 0}</td>
+          <td colspan="6" style="text-align:center;padding:24px;color:var(--text-muted);">
+            Nessuno scommettitore ancora registrato. Clicca su <strong>Accedi e Gioca</strong> per entrare in classifica con 100 Crediti!
+          </td>
         </tr>
       `;
-    }).join("");
+    } else {
+      lbBody.innerHTML = sorted.map((u, idx) => {
+        const medal = idx === 0 ? "🥇 1°" : idx === 1 ? "🥈 2°" : idx === 2 ? "🥉 3°" : `${idx + 1}°`;
+        const net = u.credits - STARTING_CREDITS;
+        const netStr = net > 0 ? `+${net}` : `${net}`;
+        return `
+          <tr>
+            <td style="font-weight:900;font-size:1rem;">${medal}</td>
+            <td><strong>👤 ${esc(u.name)}</strong></td>
+            <td style="color:var(--gold);font-weight:900;font-size:1.05rem;">${u.credits} Crediti 🪙</td>
+            <td style="color:${net >= 0 ? '#34d399' : '#f87171'};font-weight:800;">${netStr}</td>
+            <td style="color:#34d399;font-weight:700;">${u.wins || 0}</td>
+            <td style="color:#f87171;font-weight:700;">${u.losses || 0}</td>
+          </tr>
+        `;
+      }).join("");
+    }
   }
 
   const slips = getBetSlips();
