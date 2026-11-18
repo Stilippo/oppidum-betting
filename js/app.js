@@ -6,15 +6,16 @@
    ============================================================ */
 
 const STORAGE_KEYS = {
-  USERS: "oppidum_season_users_v15",
-  CURRENT_USER: "oppidum_season_current_user_v15",
-  BETS: "oppidum_season_bets_v15",
-  MATCHES: "oppidum_season_matches_v15",
-  APPEARANCES_REF: "oppidum_season_hist_apps_v15"
+  USERS: "oppidum_season_users_v16",
+  CURRENT_USER: "oppidum_season_current_user_v16",
+  BETS: "oppidum_season_bets_v16",
+  MATCHES: "oppidum_season_matches_v16",
+  APPEARANCES_REF: "oppidum_season_hist_apps_v16"
 };
 
 const CLOUD_SYNC_URL = "https://api.restful-api.dev/objects/ff808181a09d98f701a1ef0b06e131f8";
 const STARTING_CREDITS = 100;
+const MIN_VALID_ODD = 1.15; // Esclude quote troppo vicine a 1.00
 
 // ============================================================
 // 1. GIRONE 6 — C.R. SARDEGNA (QUESTA STAGIONE)
@@ -74,23 +75,32 @@ const HISTORICAL_AI_REFERENCE = {
     { id: "pilia_fl",   name: "PILIA FL",   role: "Difensore", isGk: false, histGoals: 3,  histFouls: 21, histApps: 12, note: "Capitano · Difensore", leadership: "Capitano" },
     { id: "troncia",    name: "TRONCIA",    role: "Fascia",    isGk: false, histGoals: 3,  histFouls: 11, histApps: 12, note: "Giocatore di Fascia" },
     { id: "pieroni",    name: "PIERONI",    role: "Difensore", isGk: false, histGoals: 2,  histFouls: 16, histApps: 10, note: "Difensore" },
-    { id: "pilia_fb",   name: "PILIA FB",   role: "Fascia",    isGk: false, histGoals: 1,  histFouls: 9,  histApps: 10, note: "Giocatore di Fascia" },
+    { id: "pilia_fb",   name: "PILIA FB",   role: "Fascia",    isGk: false, histGoals: 1,  histApps: 10, histFouls: 9,  note: "Giocatore di Fascia" },
     { id: "morzetti",   name: "MORZETTI",   role: "Difensore", isGk: false, histGoals: 0,  histFouls: 13, histApps: 8,  note: "Difensore" },
     { id: "murtas",     name: "MURTAS",     role: "Fascia",    isGk: false, histGoals: 0,  histFouls: 7,  histApps: 8,  note: "Giocatore di Fascia" },
     { id: "orru",       name: "ORRU'",      role: "Fascia",    isGk: false, histGoals: 0,  histFouls: 7,  histApps: 8,  note: "Giocatore di Fascia" },
     { id: "pittotti",   name: "PITTOTTI",   role: "Centroboa", isGk: false, histGoals: 0,  histFouls: 1,  histApps: 1,  note: "Centroboa" },
     { id: "olla",       name: "OLLA",       role: "Fascia",    isGk: false, histGoals: 0,  histFouls: 0,  histApps: 0,  note: "Giocatore di Fascia" }
   ],
-  // Calendario Ufficiale (Attualmente vuoto perché non ancora uscito; quando uscirà basterà popolarlo qui)
   officialCalendar: []
 };
 
 // ---------- STATO GLOBALE ----------
 let appState = {
   selectedMatchId: null,
-  activeMarketCategory: "all", // all | main | scorers | gk | goliardic
-  selectedHistoryMatchday: "ALL", // ALL | 1 | 2 | ...
-  betSlip: []
+  activeMarketCategory: "all", // all | main | scorers | exclusions | gk | goliardic
+  selectedHistoryMatchday: "ALL",
+  betSlip: [],
+  // Selezione dinamica utente per Over/Under, Gol Esatti (min 1) e Handicap
+  customSelections: {
+    ouMatchLine: null,
+    ouHomeLine: null,
+    ouAwayLine: null,
+    exactMatchGoals: null,
+    exactHomeGoals: null,
+    exactAwayGoals: null,
+    handicapHomeLine: null
+  }
 };
 
 // ---------- UTILITY ----------
@@ -430,76 +440,74 @@ function generateAiOddsForMatch(opponentName, isHome = true, boostOppidum = 1.15
 
   const lambdaHome = isHome ? lambdaOppidum : lambdaOpponent;
   const lambdaAway = isHome ? lambdaOpponent : lambdaOppidum;
+  const lambdaTotal = lambdaHome + lambdaAway;
 
-  // Funzione helper per probabilità Poisson Over(line) di una singola variabile o somma
-  const calcSingleOverProb = (lam, line) => {
+  // Calcola probabilità reale Poisson Over(line) senza clamp artificiali
+  const rawOverProb = (lam, line) => {
     const kMax = Math.floor(line);
     let cdf = 0;
     for (let k = 0; k <= kMax; k++) cdf += poissonPmf(k, lam);
-    return Math.max(0.05, Math.min(0.95, 1 - cdf));
+    return Math.max(0.0005, Math.min(0.9995, 1 - cdf));
   };
 
-  // 1) Over / Under Tutto il Match (3 linee selezionabili)
-  const baseTotLine = Math.round(lambdaHome + lambdaAway) - 0.5;
-  const ouTotalLines = [baseTotLine - 1, baseTotLine, baseTotLine + 1].map(line => {
-    const pOver = calcSingleOverProb(lambdaHome + lambdaAway, line);
-    const pUnder = 1 - pOver;
-    return {
-      line,
-      oddOver: probToOdd(pOver, 1.06, 1.20, 4.80),
-      oddUnder: probToOdd(pUnder, 1.06, 1.20, 4.80)
-    };
-  });
+  // Costruisce tutti i range validi per un dato lambda, ESCLUDENDO le soglie
+  // dove Over o Under hanno una quota troppo vicina all'1 (< MIN_VALID_ODD = 1.15)
+  const buildValidOuRanges = (lam, minK, maxK) => {
+    const list = [];
+    for (let k = minK; k <= maxK; k++) {
+      const line = k + 0.5;
+      const pOver = rawOverProb(lam, line);
+      const pUnder = 1 - pOver;
+      const rawOddOver = Number((1 / (pOver * 1.05)).toFixed(2));
+      const rawOddUnder = Number((1 / (pUnder * 1.05)).toFixed(2));
+      // Scarta i range con quota troppo vicina a 1 (< 1.15) o fuori scala (> 18.0)
+      if (rawOddOver >= MIN_VALID_ODD && rawOddUnder >= MIN_VALID_ODD && rawOddOver <= 18 && rawOddUnder <= 18) {
+        list.push({
+          line,
+          oddOver: rawOddOver,
+          oddUnder: rawOddUnder
+        });
+      }
+    }
+    return list;
+  };
 
-  // 2) Over / Under Squadra Casa (3 linee selezionabili)
-  const baseHomeLine = Math.round(lambdaHome) - 0.5;
-  const ouHomeLines = [baseHomeLine - 1, baseHomeLine, baseHomeLine + 1].map(line => {
-    const pOver = calcSingleOverProb(lambdaHome, line);
-    const pUnder = 1 - pOver;
-    return {
-      line,
-      oddOver: probToOdd(pOver, 1.06, 1.20, 4.80),
-      oddUnder: probToOdd(pUnder, 1.06, 1.20, 4.80)
-    };
-  });
+  // 1) Tutti i range validi Over/Under Tutto il Match
+  const ouTotalLines = buildValidOuRanges(lambdaTotal, 8, 36);
+  // 2) Tutti i range validi Over/Under Squadra Casa
+  const ouHomeLines = buildValidOuRanges(lambdaHome, 2, 22);
+  // 3) Tutti i range validi Over/Under Squadra Trasferta
+  const ouAwayLines = buildValidOuRanges(lambdaAway, 2, 22);
 
-  // 3) Over / Under Squadra Trasferta (3 linee selezionabili)
-  const baseAwayLine = Math.round(lambdaAway) - 0.5;
-  const ouAwayLines = [baseAwayLine - 1, baseAwayLine, baseAwayLine + 1].map(line => {
-    const pOver = calcSingleOverProb(lambdaAway, line);
-    const pUnder = 1 - pOver;
-    return {
-      line,
-      oddOver: probToOdd(pOver, 1.06, 1.20, 4.80),
-      oddUnder: probToOdd(pUnder, 1.06, 1.20, 4.80)
-    };
-  });
-
-  // 4) Handicap Casa / Trasferta (3 linee di spread selezionabili)
-  const baseSpread = Math.round(lambdaAway - lambdaHome) + 0.5; // spread applicato a Casa
-  const handicapLines = [baseSpread - 1, baseSpread, baseSpread + 1].map(hcpHome => {
-    // Casa vince con handicap hcpHome se (GolCasa + hcpHome) > GolTrasferta
+  // 4) Tutti gli Handicap Casa/Trasferta validi (escludendo quote < 1.15)
+  const handicapLines = [];
+  for (let k = -10; k <= 10; k++) {
+    const hcpHome = k + 0.5;
     let pHomeCover = 0;
-    for (let gh = 0; gh <= 26; gh++) {
+    for (let gh = 0; gh <= 32; gh++) {
       const ph = poissonPmf(gh, lambdaHome);
-      for (let ga = 0; ga <= 26; ga++) {
+      for (let ga = 0; ga <= 32; ga++) {
         if (gh + hcpHome > ga) {
           pHomeCover += ph * poissonPmf(ga, lambdaAway);
         }
       }
     }
-    pHomeCover = Math.max(0.08, Math.min(0.92, pHomeCover));
+    pHomeCover = Math.max(0.001, Math.min(0.999, pHomeCover));
     const pAwayCover = 1 - pHomeCover;
-    const hcpAway = -hcpHome;
-    return {
-      hcpHome,
-      hcpAway,
-      hcpHomeStr: hcpHome > 0 ? `+${hcpHome.toFixed(1)}` : hcpHome.toFixed(1),
-      hcpAwayStr: hcpAway > 0 ? `+${hcpAway.toFixed(1)}` : hcpAway.toFixed(1),
-      oddHome: probToOdd(pHomeCover, 1.06, 1.22, 4.90),
-      oddAway: probToOdd(pAwayCover, 1.06, 1.22, 4.90)
-    };
-  });
+    const oddHome = Number((1 / (pHomeCover * 1.05)).toFixed(2));
+    const oddAway = Number((1 / (pAwayCover * 1.05)).toFixed(2));
+    if (oddHome >= MIN_VALID_ODD && oddAway >= MIN_VALID_ODD && oddHome <= 15 && oddAway <= 15) {
+      const hcpAway = -hcpHome;
+      handicapLines.push({
+        hcpHome,
+        hcpAway,
+        hcpHomeStr: hcpHome > 0 ? `+${hcpHome.toFixed(1)}` : hcpHome.toFixed(1),
+        hcpAwayStr: hcpAway > 0 ? `+${hcpAway.toFixed(1)}` : hcpAway.toFixed(1),
+        oddHome,
+        oddAway
+      });
+    }
+  }
 
   const playerStats = computeNewSeasonPlayerStats();
   const activeFieldPlayers = playerStats.filter(p =>
@@ -566,13 +574,13 @@ function generateAiOddsForMatch(opponentName, isHome = true, boostOppidum = 1.15
   }).sort((a, b) => a.oddFoul3 - b.oddFoul3);
 
   const gkSaveLine = Math.max(8.5, Math.round(lambdaOpponent * 0.85) - 0.5);
+  // Rimosso "Difesa Oppidum subisce Under X.5 gol" dalla sezione portieri
   const goalkeeperMarkets = [
     { id: "gk_atzeni_goal",  label: "⚽ Gol di ATZENI in partita!", sub: "Tiro da porta a porta o salita sul finale", odd: 15.00 },
     { id: "gk_faret_goal",   label: "⚽ Gol di FARET in partita!",  sub: "Tiro da porta a porta o salita sul finale", odd: 15.00 },
     { id: "gk_atzeni_saves", label: `🧤 ATZENI Over ${gkSaveLine} parate`, sub: "Specialista tra i pali", odd: 1.85 },
     { id: "gk_faret_saves",  label: `🧤 FARET Over ${gkSaveLine} parate`, sub: "Muro di Terramaini", odd: 1.85 },
     { id: "gk_rigore",       label: "🧤 ATZENI o FARET para almeno un rigore (5m)", sub: "Boato della panchina", odd: 2.75 },
-    { id: "gk_under_gol",    label: `🧱 Difesa Oppidum subisce Under ${opponentLine} gol`, sub: "Partita blindata", odd: 1.90 },
     { id: "gk_clean_q",      label: "🔒 Porta inviolata in almeno un quarto (8')", sub: "Saracinesca abbassata", odd: 3.40 },
     { id: "gk_assist",       label: "🚀 Assist diretto di ATZENI o FARET in controfuga", sub: "Lancio sul bomber", odd: 4.50 }
   ];
@@ -589,6 +597,9 @@ function generateAiOddsForMatch(opponentName, isHome = true, boostOppidum = 1.15
   return {
     lambdaOppidum: Number(lambdaOppidum.toFixed(1)),
     lambdaOpponent: Number(lambdaOpponent.toFixed(1)),
+    lambdaHome: Number(lambdaHome.toFixed(1)),
+    lambdaAway: Number(lambdaAway.toFixed(1)),
+    lambdaTotal: Number(lambdaTotal.toFixed(1)),
     prob1: Math.round(p1 * 100),
     probX: Math.round(pX * 100),
     prob2: Math.round(p2 * 100),
@@ -960,6 +971,28 @@ function oddButtonHtml(match, marketKey, label, sub, odd) {
   `;
 }
 
+// Calcola la quota per un numero ESATTO di gol (k >= 1, mai 0) con Poisson
+function computeExactGoalsOdd(lambda, kGoals) {
+  const k = Math.max(1, parseInt(kGoals, 10) || 1);
+  const p = poissonPmf(k, lambda);
+  const rawOdd = 1 / (Math.max(0.002, p) * 1.05);
+  return Number(Math.max(MIN_VALID_ODD, Math.min(35.0, rawOdd)).toFixed(2));
+}
+
+function updateCustomMarketSelection(key, val, matchId) {
+  if (key.startsWith("exact")) {
+    let n = parseInt(val, 10);
+    if (isNaN(n) || n < 1) n = 1; // Mai zero! Minimo 1 gol
+    if (n > 45) n = 45;
+    appState.customSelections[key] = n;
+  } else {
+    appState.customSelections[key] = parseFloat(val);
+  }
+  const matches = getSeasonMatches();
+  const activeMatch = matches.find(m => m.id === (matchId || appState.selectedMatchId)) || matches[0];
+  if (activeMatch) renderMarketsForMatch(activeMatch);
+}
+
 function renderMarketsForMatch(match) {
   const cat = appState.activeMarketCategory;
   const an = match.analysis;
@@ -967,6 +1000,46 @@ function renderMarketsForMatch(match) {
   const closed = isMatchBettingClosed(match);
   const homeName = match.isHome ? "Oppidum" : match.opponent;
   const awayName = match.isHome ? match.opponent : "Oppidum";
+
+  const lamHome = an.lambdaHome || (match.isHome ? an.lambdaOppidum : an.lambdaOpponent);
+  const lamAway = an.lambdaAway || (match.isHome ? an.lambdaOpponent : an.lambdaOppidum);
+  const lamTot  = an.lambdaTotal || (lamHome + lamAway);
+
+  // Inizializza le selezioni dinamiche sui valori centrali se non ancora scelte dall'utente
+  const ouTotList  = mm.ouTotalLines || [];
+  const ouHomeList = mm.ouHomeLines || [];
+  const ouAwayList = mm.ouAwayLines || [];
+  const hcpList    = mm.handicapLines || [];
+
+  const cs = appState.customSelections;
+  if (!cs.ouMatchLine || !ouTotList.some(r => r.line === cs.ouMatchLine)) {
+    cs.ouMatchLine = ouTotList[Math.floor(ouTotList.length / 2)]?.line || mm.totalLine;
+  }
+  if (!cs.ouHomeLine || !ouHomeList.some(r => r.line === cs.ouHomeLine)) {
+    cs.ouHomeLine = ouHomeList[Math.floor(ouHomeList.length / 2)]?.line || mm.oppidumLine;
+  }
+  if (!cs.ouAwayLine || !ouAwayList.some(r => r.line === cs.ouAwayLine)) {
+    cs.ouAwayLine = ouAwayList[Math.floor(ouAwayList.length / 2)]?.line || 10.5;
+  }
+  if (cs.handicapHomeLine === null || !hcpList.some(r => r.hcpHome === cs.handicapHomeLine)) {
+    cs.handicapHomeLine = hcpList[Math.floor(hcpList.length / 2)]?.hcpHome ?? mm.handicapLine;
+  }
+  if (!cs.exactMatchGoals || cs.exactMatchGoals < 1) cs.exactMatchGoals = Math.max(1, Math.round(lamTot));
+  if (!cs.exactHomeGoals  || cs.exactHomeGoals < 1)  cs.exactHomeGoals  = Math.max(1, Math.round(lamHome));
+  if (!cs.exactAwayGoals  || cs.exactAwayGoals < 1)  cs.exactAwayGoals  = Math.max(1, Math.round(lamAway));
+
+  const selTotRow  = ouTotList.find(r => r.line === cs.ouMatchLine)  || ouTotList[0]  || { line: mm.totalLine, oddOver: 1.85, oddUnder: 1.85 };
+  const selHomeRow = ouHomeList.find(r => r.line === cs.ouHomeLine) || ouHomeList[0] || { line: mm.oppidumLine, oddOver: 1.85, oddUnder: 1.85 };
+  const selAwayRow = ouAwayList.find(r => r.line === cs.ouAwayLine) || ouAwayList[0] || { line: 10.5, oddOver: 1.85, oddUnder: 1.85 };
+  const selHcpRow  = hcpList.find(r => r.hcpHome === cs.handicapHomeLine) || hcpList[0] || {
+    hcpHome: mm.handicapLine, hcpAway: -mm.handicapLine,
+    hcpHomeStr: `+${mm.handicapLine}`, hcpAwayStr: `${-mm.handicapLine}`,
+    oddHome: 1.85, oddAway: 1.85
+  };
+
+  const oddExactMatch = computeExactGoalsOdd(lamTot, cs.exactMatchGoals);
+  const oddExactHome  = computeExactGoalsOdd(lamHome, cs.exactHomeGoals);
+  const oddExactAway  = computeExactGoalsOdd(lamAway, cs.exactAwayGoals);
 
   let html = "";
 
@@ -979,18 +1052,6 @@ function renderMarketsForMatch(match) {
   }
 
   if (cat === "all" || cat === "main") {
-    const ouTot = mm.ouTotalLines || [{ line: mm.totalLine, oddOver: mm.oddOverTotal, oddUnder: mm.oddUnderTotal }];
-    const ouHome = mm.ouHomeLines || [{ line: mm.oppidumLine, oddOver: mm.oddOverOppidum, oddUnder: mm.oddUnderOppidum }];
-    const ouAway = mm.ouAwayLines || [{ line: 10.5, oddOver: 1.85, oddUnder: 1.85 }];
-    const hcpList = mm.handicapLines || [{
-      hcpHome: mm.handicapLine,
-      hcpAway: -mm.handicapLine,
-      hcpHomeStr: mm.handicapLine >= 0 ? `+${mm.handicapLine}` : `${mm.handicapLine}`,
-      hcpAwayStr: -mm.handicapLine >= 0 ? `+${-mm.handicapLine}` : `${-mm.handicapLine}`,
-      oddHome: mm.oddHandicapOppidum,
-      oddAway: 1.85
-    }];
-
     html += `
       <div class="market-block">
         <div class="market-block-header">
@@ -1007,59 +1068,155 @@ function renderMarketsForMatch(match) {
         </div>
       </div>
 
-      <!-- 1. OVER / UNDER TUTTO IL MATCH -->
+      <!-- 1. OVER / UNDER DINAMICO: TUTTO IL MATCH + CASA + TRASFERTA -->
       <div class="market-block">
         <div class="market-block-header">
-          <div class="market-block-title">🔢 Over / Under Gol — Tutto il Match</div>
-          <span class="market-badge">Somma gol ${homeName} + ${awayName}</span>
+          <div class="market-block-title">🔢 Over / Under Gol — Seleziona il Range (Match · Casa · Trasferta)</div>
+          <span class="market-badge">Escluse quote troppo vicine a 1 (&lt;1.15)</span>
         </div>
-        <div class="odds-grid two-cols">
-          ${ouTot.map(row => `
-            ${oddButtonHtml(match, `OU_MATCH_OVER_${row.line}`, `Over ${row.line} Gol Match`, `Almeno ${Math.ceil(row.line)} gol totali`, row.oddOver)}
-            ${oddButtonHtml(match, `OU_MATCH_UNDER_${row.line}`, `Under ${row.line} Gol Match`, `Massimo ${Math.floor(row.line)} gol totali`, row.oddUnder)}
-          `).join("")}
+
+        <!-- A) Tutto il Match -->
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+            <strong style="font-size:0.86rem;color:var(--gold);">🤽 Somma Gol Tutto il Match (${esc(homeName)} + ${esc(awayName)})</strong>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <label for="selOuMatch" style="font-size:0.76rem;color:var(--text-muted);">Scegli Soglia:</label>
+              <select id="selOuMatch" style="width:auto;padding:6px 10px;font-weight:800;"
+                onchange="updateCustomMarketSelection('ouMatchLine', this.value, '${esc(match.id)}')">
+                ${ouTotList.map(r => `
+                  <option value="${r.line}" ${r.line === selTotRow.line ? "selected" : ""}>
+                    Linea ${r.line} gol (Over @${r.oddOver.toFixed(2)} / Under @${r.oddUnder.toFixed(2)})
+                  </option>
+                `).join("")}
+              </select>
+            </div>
+          </div>
+          <div class="odds-grid two-cols">
+            ${oddButtonHtml(match, `OU_MATCH_OVER_${selTotRow.line}`, `Over ${selTotRow.line} Gol Match`, `Almeno ${Math.ceil(selTotRow.line)} gol totali`, selTotRow.oddOver)}
+            ${oddButtonHtml(match, `OU_MATCH_UNDER_${selTotRow.line}`, `Under ${selTotRow.line} Gol Match`, `Massimo ${Math.floor(selTotRow.line)} gol totali`, selTotRow.oddUnder)}
+          </div>
+        </div>
+
+        <!-- B) Squadra Casa -->
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+            <strong style="font-size:0.86rem;color:#34d399;">🏠 Gol Squadra Casa: ${esc(homeName)}</strong>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <label for="selOuHome" style="font-size:0.76rem;color:var(--text-muted);">Scegli Soglia:</label>
+              <select id="selOuHome" style="width:auto;padding:6px 10px;font-weight:800;"
+                onchange="updateCustomMarketSelection('ouHomeLine', this.value, '${esc(match.id)}')">
+                ${ouHomeList.map(r => `
+                  <option value="${r.line}" ${r.line === selHomeRow.line ? "selected" : ""}>
+                    Linea ${r.line} gol (Over @${r.oddOver.toFixed(2)} / Under @${r.oddUnder.toFixed(2)})
+                  </option>
+                `).join("")}
+              </select>
+            </div>
+          </div>
+          <div class="odds-grid two-cols">
+            ${oddButtonHtml(match, `OU_HOME_OVER_${selHomeRow.line}`, `Casa Over ${selHomeRow.line} (${homeName})`, `Almeno ${Math.ceil(selHomeRow.line)} gol`, selHomeRow.oddOver)}
+            ${oddButtonHtml(match, `OU_HOME_UNDER_${selHomeRow.line}`, `Casa Under ${selHomeRow.line} (${homeName})`, `Massimo ${Math.floor(selHomeRow.line)} gol`, selHomeRow.oddUnder)}
+          </div>
+        </div>
+
+        <!-- C) Squadra Trasferta -->
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+            <strong style="font-size:0.86rem;color:var(--oppidum-sky);">✈️ Gol Squadra Trasferta: ${esc(awayName)}</strong>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <label for="selOuAway" style="font-size:0.76rem;color:var(--text-muted);">Scegli Soglia:</label>
+              <select id="selOuAway" style="width:auto;padding:6px 10px;font-weight:800;"
+                onchange="updateCustomMarketSelection('ouAwayLine', this.value, '${esc(match.id)}')">
+                ${ouAwayList.map(r => `
+                  <option value="${r.line}" ${r.line === selAwayRow.line ? "selected" : ""}>
+                    Linea ${r.line} gol (Over @${r.oddOver.toFixed(2)} / Under @${r.oddUnder.toFixed(2)})
+                  </option>
+                `).join("")}
+              </select>
+            </div>
+          </div>
+          <div class="odds-grid two-cols">
+            ${oddButtonHtml(match, `OU_AWAY_OVER_${selAwayRow.line}`, `Trasferta Over ${selAwayRow.line} (${awayName})`, `Almeno ${Math.ceil(selAwayRow.line)} gol`, selAwayRow.oddOver)}
+            ${oddButtonHtml(match, `OU_AWAY_UNDER_${selAwayRow.line}`, `Trasferta Under ${selAwayRow.line} (${awayName})`, `Massimo ${Math.floor(selAwayRow.line)} gol`, selAwayRow.oddUnder)}
+          </div>
         </div>
       </div>
 
-      <!-- 2. OVER / UNDER CASA & TRASFERTA -->
+      <!-- 2. NUMERO ESATTO DI GOL (SCELTO DALL'UTENTE, MINIMO 1, MAI ZERO) -->
       <div class="market-block">
         <div class="market-block-header">
-          <div class="market-block-title">🏠✈️ Over / Under Gol — Squadra Casa &amp; Trasferta</div>
-          <span class="market-badge">Gol della singola squadra</span>
+          <div class="market-block-title">🎯 Numero Esatto di Gol (Scegli il Numero · Minimo 1)</div>
+          <span class="market-badge">Inserisci il numero esatto di gol (No 0)</span>
         </div>
 
-        <div style="font-size:0.78rem;font-weight:800;color:var(--gold);margin-bottom:8px;">
-          🏠 Squadra Casa: ${esc(homeName)}
-        </div>
-        <div class="odds-grid two-cols" style="margin-bottom:14px;">
-          ${ouHome.map(row => `
-            ${oddButtonHtml(match, `OU_HOME_OVER_${row.line}`, `Casa Over ${row.line} (${homeName})`, `Segna almeno ${Math.ceil(row.line)} gol`, row.oddOver)}
-            ${oddButtonHtml(match, `OU_HOME_UNDER_${row.line}`, `Casa Under ${row.line} (${homeName})`, `Segna massimo ${Math.floor(row.line)} gol`, row.oddUnder)}
-          `).join("")}
-        </div>
+        <div class="odds-grid scorers-grid">
+          <!-- Gol Esatti Tutto il Match -->
+          <div class="scorer-market-row">
+            <div class="scorer-info">
+              <span class="scorer-name">🤽 Gol Esatti Tutto il Match</span>
+              <span class="scorer-stat-pill">Attesi ~${Math.round(lamTot)}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;margin:4px 0;">
+              <label style="font-size:0.75rem;color:var(--text-muted);white-space:nowrap;">Numero Gol (min 1):</label>
+              <input type="number" min="1" max="45" value="${cs.exactMatchGoals}"
+                style="padding:6px 10px;font-weight:800;text-align:center;"
+                onchange="updateCustomMarketSelection('exactMatchGoals', this.value, '${esc(match.id)}')" />
+            </div>
+            ${oddButtonHtml(match, `EXACT_GOALS_MATCH_${cs.exactMatchGoals}`, `Match: Esattamente ${cs.exactMatchGoals} Gol`, "Somma esatta gol a fine gara", oddExactMatch)}
+          </div>
 
-        <div style="font-size:0.78rem;font-weight:800;color:var(--oppidum-sky);margin-bottom:8px;">
-          ✈️ Squadra Trasferta: ${esc(awayName)}
-        </div>
-        <div class="odds-grid two-cols">
-          ${ouAway.map(row => `
-            ${oddButtonHtml(match, `OU_AWAY_OVER_${row.line}`, `Trasferta Over ${row.line} (${awayName})`, `Segna almeno ${Math.ceil(row.line)} gol`, row.oddOver)}
-            ${oddButtonHtml(match, `OU_AWAY_UNDER_${row.line}`, `Trasferta Under ${row.line} (${awayName})`, `Segna massimo ${Math.floor(row.line)} gol`, row.oddUnder)}
-          `).join("")}
+          <!-- Gol Esatti Squadra Casa -->
+          <div class="scorer-market-row">
+            <div class="scorer-info">
+              <span class="scorer-name">🏠 Gol Esatti ${esc(homeName)}</span>
+              <span class="scorer-stat-pill">Casa (~${Math.round(lamHome)})</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;margin:4px 0;">
+              <label style="font-size:0.75rem;color:var(--text-muted);white-space:nowrap;">Numero Gol (min 1):</label>
+              <input type="number" min="1" max="30" value="${cs.exactHomeGoals}"
+                style="padding:6px 10px;font-weight:800;text-align:center;"
+                onchange="updateCustomMarketSelection('exactHomeGoals', this.value, '${esc(match.id)}')" />
+            </div>
+            ${oddButtonHtml(match, `EXACT_GOALS_HOME_${cs.exactHomeGoals}`, `${homeName}: Esattamente ${cs.exactHomeGoals} Gol`, "Numero esatto gol squadra Casa", oddExactHome)}
+          </div>
+
+          <!-- Gol Esatti Squadra Trasferta -->
+          <div class="scorer-market-row">
+            <div class="scorer-info">
+              <span class="scorer-name">✈️ Gol Esatti ${esc(awayName)}</span>
+              <span class="scorer-stat-pill">Trasferta (~${Math.round(lamAway)})</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;margin:4px 0;">
+              <label style="font-size:0.75rem;color:var(--text-muted);white-space:nowrap;">Numero Gol (min 1):</label>
+              <input type="number" min="1" max="30" value="${cs.exactAwayGoals}"
+                style="padding:6px 10px;font-weight:800;text-align:center;"
+                onchange="updateCustomMarketSelection('exactAwayGoals', this.value, '${esc(match.id)}')" />
+            </div>
+            ${oddButtonHtml(match, `EXACT_GOALS_AWAY_${cs.exactAwayGoals}`, `${awayName}: Esattamente ${cs.exactAwayGoals} Gol`, "Numero esatto gol squadra Trasferta", oddExactAway)}
+          </div>
         </div>
       </div>
 
-      <!-- 3. HANDICAP CASA O TRASFERTA -->
+      <!-- 3. HANDICAP CASA O TRASFERTA (SELEZIONA LO SPREAD) -->
       <div class="market-block">
         <div class="market-block-header">
           <div class="market-block-title">⚖️ Handicap Gol — Casa o Trasferta</div>
-          <span class="market-badge">Testa a Testa con Handicap</span>
+          <span class="market-badge">Seleziona la linea Handicap</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+          <span style="font-size:0.8rem;color:#cbd5e1;">Scegli il vantaggio/svantaggio gol:</span>
+          <select id="selHcpLine" style="width:auto;padding:6px 10px;font-weight:800;"
+            onchange="updateCustomMarketSelection('handicapHomeLine', this.value, '${esc(match.id)}')">
+            ${hcpList.map(r => `
+              <option value="${r.hcpHome}" ${r.hcpHome === selHcpRow.hcpHome ? "selected" : ""}>
+                Casa ${r.hcpHomeStr} (@${r.oddHome.toFixed(2)}) / Trasferta ${r.hcpAwayStr} (@${r.oddAway.toFixed(2)})
+              </option>
+            `).join("")}
+          </select>
         </div>
         <div class="odds-grid two-cols">
-          ${hcpList.map(row => `
-            ${oddButtonHtml(match, `HCP_HOME_${row.hcpHome}`, `1 Handicap Casa (${homeName} ${row.hcpHomeStr})`, `Vince col bonus/malus ${row.hcpHomeStr} gol`, row.oddHome)}
-            ${oddButtonHtml(match, `HCP_AWAY_${row.hcpAway}`, `2 Handicap Trasferta (${awayName} ${row.hcpAwayStr})`, `Vince col bonus/malus ${row.hcpAwayStr} gol`, row.oddAway)}
-          `).join("")}
+          ${oddButtonHtml(match, `HCP_HOME_${selHcpRow.hcpHome}`, `1 Handicap Casa (${homeName} ${selHcpRow.hcpHomeStr})`, `Vince con handicap ${selHcpRow.hcpHomeStr} gol`, selHcpRow.oddHome)}
+          ${oddButtonHtml(match, `HCP_AWAY_${selHcpRow.hcpAway}`, `2 Handicap Trasferta (${awayName} ${selHcpRow.hcpAwayStr})`, `Vince con handicap ${selHcpRow.hcpAwayStr} gol`, selHcpRow.oddAway)}
         </div>
       </div>
     `;
