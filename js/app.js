@@ -6,30 +6,30 @@
    ============================================================ */
 
 const STORAGE_KEYS = {
-  USERS: "oppidum_season_users_v9",
-  CURRENT_USER: "oppidum_season_current_user_v9",
-  BETS: "oppidum_season_bets_v9",
-  MATCHES: "oppidum_season_matches_v9",
-  APPEARANCES_REF: "oppidum_season_hist_apps_v9"
+  USERS: "oppidum_season_users_v10",
+  CURRENT_USER: "oppidum_season_current_user_v10",
+  BETS: "oppidum_season_bets_v10",
+  MATCHES: "oppidum_season_matches_v10",
+  APPEARANCES_REF: "oppidum_season_hist_apps_v10"
 };
 
 const CLOUD_SYNC_URL = "https://api.restful-api.dev/objects/ff808181a09d98f701a1ef0b06e131f8";
 const STARTING_CREDITS = 100;
 
 // ============================================================
-// 1. SOCIETÀ DEL CAMPIONATO & RIFERIMENTO AI INTERNO
+// 1. GIRONE 6 — C.R. SARDEGNA (QUESTA STAGIONE)
 // ============================================================
 const GIRONE_6_TEAMS = [
-  "Anaconda PN",
-  "Aqvaroma",
-  "Bellator Frusino",
-  "Castelli Romani",
-  "De Virtute Roma",
-  "Imperium",
-  "Oppidum S. Cagliari",
-  "Promogest Quartu SE",
-  "RN Cagliari",
-  "RN Roma Vis Nova"
+  "ANACONDA PALLANUOTO",
+  "ANTARES N e PN LATINA",
+  "AQUADEMIA",
+  "BABEL",
+  "CENTUMCELLAE PALLANUOTO",
+  "LAZIO PALLANUOTO",
+  "OPPIDUM SPORT CAGLIARI",
+  "R.N. CAGLIARI",
+  "VILLA AURELIA S.C.",
+  "ZERO9 TEAM"
 ];
 
 const HISTORICAL_AI_REFERENCE = {
@@ -519,10 +519,10 @@ function getSeasonMatches() {
     {
       id: "ex_match_1",
       matchday: 1,
-      title: "1ª Giornata — Serie C",
+      title: "1ª Giornata — Girone 6 (C.R. Sardegna)",
       date: "Sabato 28 Nov 2026 · Ore 15:00",
       kickoffIso: "2026-11-28T15:00:00+01:00",
-      opponent: "Promogest Quartu SE",
+      opponent: "ANACONDA PALLANUOTO",
       isHome: true,
       boostOppidum: 1.15,
       status: "open",
@@ -530,15 +530,15 @@ function getSeasonMatches() {
       scoreThem: null,
       presentPlayerIds: [...allIds],
       playerGoals: {},
-      analysis: generateAiOddsForMatch("Promogest Quartu SE", true, 1.15, allIds)
+      analysis: generateAiOddsForMatch("ANACONDA PALLANUOTO", true, 1.15, allIds)
     },
     {
       id: "ex_match_2",
       matchday: 2,
-      title: "2ª Giornata — Serie C",
+      title: "2ª Giornata — Girone 6 (C.R. Sardegna)",
       date: "Sabato 5 Dic 2026 · Ore 16:30",
       kickoffIso: "2026-12-05T16:30:00+01:00",
-      opponent: "RN Cagliari",
+      opponent: "R.N. CAGLIARI",
       isHome: true,
       boostOppidum: 1.15,
       status: "open",
@@ -546,7 +546,7 @@ function getSeasonMatches() {
       scoreThem: null,
       presentPlayerIds: [...allIds],
       playerGoals: {},
-      analysis: generateAiOddsForMatch("RN Cagliari", true, 1.15, allIds)
+      analysis: generateAiOddsForMatch("R.N. CAGLIARI", true, 1.15, allIds)
     }
   ];
   localStorage.setItem(STORAGE_KEYS.MATCHES, JSON.stringify(exampleMatches));
@@ -571,15 +571,15 @@ function getBetSlips() {
       userId: "u_1",
       userName: "Scommettitore 1",
       matchday: 1,
-      matchdayLabel: "1ª Giornata — Oppidum vs Promogest Quartu SE",
+      matchdayLabel: "1ª Giornata — OPPIDUM SPORT CAGLIARI vs ANACONDA PALLANUOTO",
       createdAt: "18 nov, 14:30",
       picks: [
-        { matchId: "ex_match_1", matchday: 1, matchTitle: "1ª Giornata: Oppidum vs Promogest Quartu SE", marketKey: "1X2_1", label: "1 · Oppidum", odd: 1.48 },
-        { matchId: "ex_match_1", matchday: 1, matchTitle: "1ª Giornata: Oppidum vs Promogest Quartu SE", marketKey: "SC_melis_2", label: "MELIS 2+ Gol", odd: 1.75 }
+        { matchId: "ex_match_1", matchday: 1, matchTitle: "1ª Giornata: Oppidum vs ANACONDA PALLANUOTO", marketKey: "1X2_1", label: "1 · Oppidum", odd: 2.15 },
+        { matchId: "ex_match_1", matchday: 1, matchTitle: "1ª Giornata: Oppidum vs ANACONDA PALLANUOTO", marketKey: "SC_melis_2", label: "MELIS 2+ Gol", odd: 1.85 }
       ],
       stake: 15,
-      totalOdd: 2.59,
-      potentialPayout: 39,
+      totalOdd: 3.98,
+      potentialPayout: 60,
       status: "open"
     },
     {
@@ -587,10 +587,10 @@ function getBetSlips() {
       userId: "u_2",
       userName: "Scommettitore 2",
       matchday: 1,
-      matchdayLabel: "1ª Giornata — Oppidum vs Promogest Quartu SE",
+      matchdayLabel: "1ª Giornata — OPPIDUM SPORT CAGLIARI vs ANACONDA PALLANUOTO",
       createdAt: "18 nov, 14:45",
       picks: [
-        { matchId: "ex_match_1", matchday: 1, matchTitle: "1ª Giornata: Oppidum vs Promogest Quartu SE", marketKey: "gk_rigore", label: "🧤 ATZENI o FARET para almeno un rigore (5m)", odd: 2.75 }
+        { matchId: "ex_match_1", matchday: 1, matchTitle: "1ª Giornata: Oppidum vs ANACONDA PALLANUOTO", marketKey: "gk_rigore", label: "🧤 ATZENI o FARET para almeno un rigore (5m)", odd: 2.75 }
       ],
       stake: 10,
       totalOdd: 2.75,
@@ -602,11 +602,11 @@ function getBetSlips() {
       userId: "u_3",
       userName: "Scommettitore 3",
       matchday: 2,
-      matchdayLabel: "2ª Giornata — Oppidum vs RN Cagliari",
+      matchdayLabel: "2ª Giornata — OPPIDUM SPORT CAGLIARI vs R.N. CAGLIARI",
       createdAt: "18 nov, 15:00",
       picks: [
-        { matchId: "ex_match_2", matchday: 2, matchTitle: "2ª Giornata: Oppidum vs RN Cagliari", marketKey: "DC_1X", label: "1X (Oppidum/Par.)", odd: 1.65 },
-        { matchId: "ex_match_2", matchday: 2, matchTitle: "2ª Giornata: Oppidum vs RN Cagliari", marketKey: "SC_piras_1", label: "PIRAS Segna 1+", odd: 1.38 }
+        { matchId: "ex_match_2", matchday: 2, matchTitle: "2ª Giornata: Oppidum vs R.N. CAGLIARI", marketKey: "DC_1X", label: "1X (Oppidum/Par.)", odd: 1.65 },
+        { matchId: "ex_match_2", matchday: 2, matchTitle: "2ª Giornata: Oppidum vs R.N. CAGLIARI", marketKey: "SC_piras_1", label: "PIRAS Segna 1+", odd: 1.38 }
       ],
       stake: 10,
       totalOdd: 2.28,
@@ -631,7 +631,7 @@ function computeGirone6Table() {
 
   const settled = getSeasonMatches().filter(m => m.status === "settled");
   settled.forEach(m => {
-    const oppName = "Oppidum S. Cagliari";
+    const oppName = "OPPIDUM SPORT CAGLIARI";
     const rivName = m.opponent;
     if (!table[rivName]) {
       table[rivName] = { name: rivName, played: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 };
