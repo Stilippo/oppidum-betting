@@ -1420,6 +1420,18 @@ footer {
     display: none;
   }
 
+  .odds-grid.two-cols {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+
+  .odds-grid.two-cols .odd-btn {
+    flex-direction: row;
+    justify-content: space-between;
+    text-align: left;
+    padding: 8px 9px;
+  }
+
   .odds-grid.list-mobile {
     grid-template-columns: 1fr;
   }

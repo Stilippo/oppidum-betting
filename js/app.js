@@ -6,11 +6,11 @@
    ============================================================ */
 
 const STORAGE_KEYS = {
-  USERS: "oppidum_season_users_v14",
-  CURRENT_USER: "oppidum_season_current_user_v14",
-  BETS: "oppidum_season_bets_v14",
-  MATCHES: "oppidum_season_matches_v14",
-  APPEARANCES_REF: "oppidum_season_hist_apps_v14"
+  USERS: "oppidum_season_users_v15",
+  CURRENT_USER: "oppidum_season_current_user_v15",
+  BETS: "oppidum_season_bets_v15",
+  MATCHES: "oppidum_season_matches_v15",
+  APPEARANCES_REF: "oppidum_season_hist_apps_v15"
 };
 
 const CLOUD_SYNC_URL = "https://api.restful-api.dev/objects/ff808181a09d98f701a1ef0b06e131f8";
@@ -428,6 +428,79 @@ function generateAiOddsForMatch(opponentName, isHome = true, boostOppidum = 1.15
   const opponentLine = Math.round(lambdaOpponent) - 0.5;
   const handicapLine = Number((Math.round((lambdaOpponent - lambdaOppidum) * 2) / 2 + 0.5).toFixed(1));
 
+  const lambdaHome = isHome ? lambdaOppidum : lambdaOpponent;
+  const lambdaAway = isHome ? lambdaOpponent : lambdaOppidum;
+
+  // Funzione helper per probabilità Poisson Over(line) di una singola variabile o somma
+  const calcSingleOverProb = (lam, line) => {
+    const kMax = Math.floor(line);
+    let cdf = 0;
+    for (let k = 0; k <= kMax; k++) cdf += poissonPmf(k, lam);
+    return Math.max(0.05, Math.min(0.95, 1 - cdf));
+  };
+
+  // 1) Over / Under Tutto il Match (3 linee selezionabili)
+  const baseTotLine = Math.round(lambdaHome + lambdaAway) - 0.5;
+  const ouTotalLines = [baseTotLine - 1, baseTotLine, baseTotLine + 1].map(line => {
+    const pOver = calcSingleOverProb(lambdaHome + lambdaAway, line);
+    const pUnder = 1 - pOver;
+    return {
+      line,
+      oddOver: probToOdd(pOver, 1.06, 1.20, 4.80),
+      oddUnder: probToOdd(pUnder, 1.06, 1.20, 4.80)
+    };
+  });
+
+  // 2) Over / Under Squadra Casa (3 linee selezionabili)
+  const baseHomeLine = Math.round(lambdaHome) - 0.5;
+  const ouHomeLines = [baseHomeLine - 1, baseHomeLine, baseHomeLine + 1].map(line => {
+    const pOver = calcSingleOverProb(lambdaHome, line);
+    const pUnder = 1 - pOver;
+    return {
+      line,
+      oddOver: probToOdd(pOver, 1.06, 1.20, 4.80),
+      oddUnder: probToOdd(pUnder, 1.06, 1.20, 4.80)
+    };
+  });
+
+  // 3) Over / Under Squadra Trasferta (3 linee selezionabili)
+  const baseAwayLine = Math.round(lambdaAway) - 0.5;
+  const ouAwayLines = [baseAwayLine - 1, baseAwayLine, baseAwayLine + 1].map(line => {
+    const pOver = calcSingleOverProb(lambdaAway, line);
+    const pUnder = 1 - pOver;
+    return {
+      line,
+      oddOver: probToOdd(pOver, 1.06, 1.20, 4.80),
+      oddUnder: probToOdd(pUnder, 1.06, 1.20, 4.80)
+    };
+  });
+
+  // 4) Handicap Casa / Trasferta (3 linee di spread selezionabili)
+  const baseSpread = Math.round(lambdaAway - lambdaHome) + 0.5; // spread applicato a Casa
+  const handicapLines = [baseSpread - 1, baseSpread, baseSpread + 1].map(hcpHome => {
+    // Casa vince con handicap hcpHome se (GolCasa + hcpHome) > GolTrasferta
+    let pHomeCover = 0;
+    for (let gh = 0; gh <= 26; gh++) {
+      const ph = poissonPmf(gh, lambdaHome);
+      for (let ga = 0; ga <= 26; ga++) {
+        if (gh + hcpHome > ga) {
+          pHomeCover += ph * poissonPmf(ga, lambdaAway);
+        }
+      }
+    }
+    pHomeCover = Math.max(0.08, Math.min(0.92, pHomeCover));
+    const pAwayCover = 1 - pHomeCover;
+    const hcpAway = -hcpHome;
+    return {
+      hcpHome,
+      hcpAway,
+      hcpHomeStr: hcpHome > 0 ? `+${hcpHome.toFixed(1)}` : hcpHome.toFixed(1),
+      hcpAwayStr: hcpAway > 0 ? `+${hcpAway.toFixed(1)}` : hcpAway.toFixed(1),
+      oddHome: probToOdd(pHomeCover, 1.06, 1.22, 4.90),
+      oddAway: probToOdd(pAwayCover, 1.06, 1.22, 4.90)
+    };
+  });
+
   const playerStats = computeNewSeasonPlayerStats();
   const activeFieldPlayers = playerStats.filter(p =>
     !p.isGk && (!presentPlayerIds || presentPlayerIds.includes(p.id))
@@ -534,7 +607,11 @@ function generateAiOddsForMatch(opponentName, isHome = true, boostOppidum = 1.15
       oddOverOppidum: 1.85,
       oddUnderOppidum: 1.85,
       handicapLine,
-      oddHandicapOppidum: 1.85
+      oddHandicapOppidum: 1.85,
+      ouTotalLines,
+      ouHomeLines,
+      ouAwayLines,
+      handicapLines
     },
     scorerMarkets,
     exclusionMarkets,
@@ -902,6 +979,18 @@ function renderMarketsForMatch(match) {
   }
 
   if (cat === "all" || cat === "main") {
+    const ouTot = mm.ouTotalLines || [{ line: mm.totalLine, oddOver: mm.oddOverTotal, oddUnder: mm.oddUnderTotal }];
+    const ouHome = mm.ouHomeLines || [{ line: mm.oppidumLine, oddOver: mm.oddOverOppidum, oddUnder: mm.oddUnderOppidum }];
+    const ouAway = mm.ouAwayLines || [{ line: 10.5, oddOver: 1.85, oddUnder: 1.85 }];
+    const hcpList = mm.handicapLines || [{
+      hcpHome: mm.handicapLine,
+      hcpAway: -mm.handicapLine,
+      hcpHomeStr: mm.handicapLine >= 0 ? `+${mm.handicapLine}` : `${mm.handicapLine}`,
+      hcpAwayStr: -mm.handicapLine >= 0 ? `+${-mm.handicapLine}` : `${-mm.handicapLine}`,
+      oddHome: mm.oddHandicapOppidum,
+      oddAway: 1.85
+    }];
+
     html += `
       <div class="market-block">
         <div class="market-block-header">
@@ -918,17 +1007,59 @@ function renderMarketsForMatch(match) {
         </div>
       </div>
 
+      <!-- 1. OVER / UNDER TUTTO IL MATCH -->
       <div class="market-block">
         <div class="market-block-header">
-          <div class="market-block-title">🔢 Over / Under Gol &amp; Handicap</div>
-          <span class="market-badge">Linea AI: ${mm.totalLine} gol</span>
+          <div class="market-block-title">🔢 Over / Under Gol — Tutto il Match</div>
+          <span class="market-badge">Somma gol ${homeName} + ${awayName}</span>
         </div>
-        <div class="odds-grid list-mobile">
-          ${oddButtonHtml(match, "OU_TOT_OVER", `Over ${mm.totalLine} Gol Totali`, "Partita ricca di reti", mm.oddOverTotal)}
-          ${oddButtonHtml(match, "OU_TOT_UNDER", `Under ${mm.totalLine} Gol Totali`, "Partita tattica", mm.oddUnderTotal)}
-          ${oddButtonHtml(match, "OU_OPP_OVER", `Oppidum Over ${mm.oppidumLine} Gol`, `Soglia gol Oppidum`, mm.oddOverOppidum)}
-          ${oddButtonHtml(match, "OU_OPP_UNDER", `Oppidum Under ${mm.oppidumLine} Gol`, `Soglia gol Oppidum`, mm.oddUnderOppidum)}
-          ${oddButtonHtml(match, "HCP_OPP", `Oppidum Handicap (${mm.handicapLine >= 0 ? "+" + mm.handicapLine : mm.handicapLine})`, "Vittoria con Handicap", mm.oddHandicapOppidum)}
+        <div class="odds-grid two-cols">
+          ${ouTot.map(row => `
+            ${oddButtonHtml(match, `OU_MATCH_OVER_${row.line}`, `Over ${row.line} Gol Match`, `Almeno ${Math.ceil(row.line)} gol totali`, row.oddOver)}
+            ${oddButtonHtml(match, `OU_MATCH_UNDER_${row.line}`, `Under ${row.line} Gol Match`, `Massimo ${Math.floor(row.line)} gol totali`, row.oddUnder)}
+          `).join("")}
+        </div>
+      </div>
+
+      <!-- 2. OVER / UNDER CASA & TRASFERTA -->
+      <div class="market-block">
+        <div class="market-block-header">
+          <div class="market-block-title">🏠✈️ Over / Under Gol — Squadra Casa &amp; Trasferta</div>
+          <span class="market-badge">Gol della singola squadra</span>
+        </div>
+
+        <div style="font-size:0.78rem;font-weight:800;color:var(--gold);margin-bottom:8px;">
+          🏠 Squadra Casa: ${esc(homeName)}
+        </div>
+        <div class="odds-grid two-cols" style="margin-bottom:14px;">
+          ${ouHome.map(row => `
+            ${oddButtonHtml(match, `OU_HOME_OVER_${row.line}`, `Casa Over ${row.line} (${homeName})`, `Segna almeno ${Math.ceil(row.line)} gol`, row.oddOver)}
+            ${oddButtonHtml(match, `OU_HOME_UNDER_${row.line}`, `Casa Under ${row.line} (${homeName})`, `Segna massimo ${Math.floor(row.line)} gol`, row.oddUnder)}
+          `).join("")}
+        </div>
+
+        <div style="font-size:0.78rem;font-weight:800;color:var(--oppidum-sky);margin-bottom:8px;">
+          ✈️ Squadra Trasferta: ${esc(awayName)}
+        </div>
+        <div class="odds-grid two-cols">
+          ${ouAway.map(row => `
+            ${oddButtonHtml(match, `OU_AWAY_OVER_${row.line}`, `Trasferta Over ${row.line} (${awayName})`, `Segna almeno ${Math.ceil(row.line)} gol`, row.oddOver)}
+            ${oddButtonHtml(match, `OU_AWAY_UNDER_${row.line}`, `Trasferta Under ${row.line} (${awayName})`, `Segna massimo ${Math.floor(row.line)} gol`, row.oddUnder)}
+          `).join("")}
+        </div>
+      </div>
+
+      <!-- 3. HANDICAP CASA O TRASFERTA -->
+      <div class="market-block">
+        <div class="market-block-header">
+          <div class="market-block-title">⚖️ Handicap Gol — Casa o Trasferta</div>
+          <span class="market-badge">Testa a Testa con Handicap</span>
+        </div>
+        <div class="odds-grid two-cols">
+          ${hcpList.map(row => `
+            ${oddButtonHtml(match, `HCP_HOME_${row.hcpHome}`, `1 Handicap Casa (${homeName} ${row.hcpHomeStr})`, `Vince col bonus/malus ${row.hcpHomeStr} gol`, row.oddHome)}
+            ${oddButtonHtml(match, `HCP_AWAY_${row.hcpAway}`, `2 Handicap Trasferta (${awayName} ${row.hcpAwayStr})`, `Vince col bonus/malus ${row.hcpAwayStr} gol`, row.oddAway)}
+          `).join("")}
         </div>
       </div>
     `;
