@@ -259,18 +259,42 @@
 
     </div>
 
-    <!-- RIGHT SIDEBAR: SCHEDINA INTERATTIVA -->
-    <aside class="betslip-sidebar" id="betslipSidebar">
+    <!-- RIGHT SIDEBAR / MOBILE BOTTOM SHEET: SCHEDINA INTERATTIVA -->
+    <aside class="betslip-sidebar" id="betslipSidebar" onclick="if(event.target===this) closeMobileBetSlip()">
       <div class="betslip-card">
         <div class="betslip-header">
-          <div class="betslip-title">🎫 La Tua Schedina</div>
-          <span class="betslip-count" id="betslipCount">0</span>
+          <div class="betslip-title">
+            🎫 La Tua Schedina
+            <span class="betslip-count" id="betslipCount">0</span>
+          </div>
+          <button type="button" class="betslip-close-mobile" onclick="closeMobileBetSlip()">✕ Chiudi</button>
         </div>
         <div id="betslipBody"></div>
       </div>
     </aside>
 
   </main>
+
+  <!-- MOBILE APP BOTTOM NAVIGATION BAR -->
+  <nav class="mobile-bottom-nav" aria-label="Menu Mobile">
+    <button type="button" class="mob-nav-btn active" data-mobtab="betting" onclick="switchTab('betting')">
+      <span class="mob-icon">🎯</span>
+      <span>Quote</span>
+    </button>
+    <button type="button" class="mob-nav-btn" data-mobtab="betslip" onclick="openMobileBetSlip()">
+      <span class="mob-icon">🎫</span>
+      <span>Schedina</span>
+      <span class="mob-slip-badge" id="mobSlipCount">0</span>
+    </button>
+    <button type="button" class="mob-nav-btn" data-mobtab="leaderboard" onclick="switchTab('leaderboard')">
+      <span class="mob-icon">🏆</span>
+      <span>Classifica</span>
+    </button>
+    <button type="button" class="mob-nav-btn" data-mobtab="roster" onclick="switchTab('roster')">
+      <span class="mob-icon">🤽</span>
+      <span>Girone &amp; Rosa</span>
+    </button>
+  </nav>
 
   <!-- MODAL DI LOGIN SEMPLICE -->
   <div class="modal-backdrop" id="loginModal" onclick="if(event.target===this) closeLoginModal()">

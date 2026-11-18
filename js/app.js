@@ -594,20 +594,41 @@ function computeGirone6Table() {
   });
 }
 
-// ---------- NAVIGAZIONE TABS ----------
+// ---------- NAVIGAZIONE TABS & SCHEDINA MOBILE ----------
 function switchTab(tabId) {
+  closeMobileBetSlip();
   document.querySelectorAll(".tab-panel").forEach(el => {
     el.classList.toggle("active", el.id === `tab-${tabId}`);
   });
   document.querySelectorAll(".nav-tab").forEach(btn => {
     btn.classList.toggle("active", btn.dataset.tab === tabId);
   });
+  document.querySelectorAll(".mob-nav-btn").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.mobtab === tabId);
+  });
   const container = document.getElementById("mainWorkspace");
   if (container) {
     const showSidebar = (tabId === "betting");
     container.classList.toggle("full-width", !showSidebar);
     const sidebar = document.getElementById("betslipSidebar");
-    if (sidebar) sidebar.style.display = showSidebar ? "block" : "none";
+    if (sidebar && window.innerWidth > 960) {
+      sidebar.style.display = showSidebar ? "block" : "none";
+    }
+  }
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function openMobileBetSlip() {
+  const sidebar = document.getElementById("betslipSidebar");
+  if (sidebar) {
+    sidebar.classList.add("mobile-open");
+  }
+}
+
+function closeMobileBetSlip() {
+  const sidebar = document.getElementById("betslipSidebar");
+  if (sidebar) {
+    sidebar.classList.remove("mobile-open");
   }
 }
 
@@ -781,12 +802,12 @@ function renderMarketsForMatch(match) {
           <span class="market-badge">Valide fino al fischio d'inizio</span>
         </div>
         <div class="odds-grid">
-          ${oddButtonHtml(match, "1X2_1", `1 — Vince ${homeName}`, `Prob. AI ${an.prob1}%`, mm.odd1)}
-          ${oddButtonHtml(match, "1X2_X", `X — Pareggio`, `Prob. AI ${an.probX}%`, mm.oddX)}
-          ${oddButtonHtml(match, "1X2_2", `2 — Vince ${awayName}`, `Prob. AI ${an.prob2}%`, mm.odd2)}
-          ${oddButtonHtml(match, "DC_1X", `1X — ${homeName} o Pareggio`, "Doppia Chance", mm.odd1X)}
-          ${oddButtonHtml(match, "DC_X2", `X2 — Pareggio o ${awayName}`, "Doppia Chance", mm.oddX2)}
-          ${oddButtonHtml(match, "DC_12", `12 — Nessun Pareggio`, "Doppia Chance", mm.odd12)}
+          ${oddButtonHtml(match, "1X2_1", `1 · ${homeName}`, `Prob. AI ${an.prob1}%`, mm.odd1)}
+          ${oddButtonHtml(match, "1X2_X", `X · Pareggio`, `Prob. AI ${an.probX}%`, mm.oddX)}
+          ${oddButtonHtml(match, "1X2_2", `2 · ${awayName}`, `Prob. AI ${an.prob2}%`, mm.odd2)}
+          ${oddButtonHtml(match, "DC_1X", `1X (${homeName}/Par.)`, "Doppia Chance", mm.odd1X)}
+          ${oddButtonHtml(match, "DC_X2", `X2 (Par./${awayName})`, "Doppia Chance", mm.oddX2)}
+          ${oddButtonHtml(match, "DC_12", `12 (No Pareggio)`, "Doppia Chance", mm.odd12)}
         </div>
       </div>
 
@@ -795,7 +816,7 @@ function renderMarketsForMatch(match) {
           <div class="market-block-title">🔢 Over / Under Gol &amp; Handicap</div>
           <span class="market-badge">Linea AI: ${mm.totalLine} gol</span>
         </div>
-        <div class="odds-grid">
+        <div class="odds-grid list-mobile">
           ${oddButtonHtml(match, "OU_TOT_OVER", `Over ${mm.totalLine} Gol Totali`, "Partita ricca di reti", mm.oddOverTotal)}
           ${oddButtonHtml(match, "OU_TOT_UNDER", `Under ${mm.totalLine} Gol Totali`, "Partita tattica", mm.oddUnderTotal)}
           ${oddButtonHtml(match, "OU_OPP_OVER", `Oppidum Over ${mm.oppidumLine} Gol`, `Soglia gol Oppidum`, mm.oddOverOppidum)}
@@ -858,7 +879,7 @@ function renderMarketsForMatch(match) {
           <div class="market-block-title">🧤 Speciale Portieri</div>
           <span class="market-badge">Parate &amp; Rigori</span>
         </div>
-        <div class="odds-grid">
+        <div class="odds-grid list-mobile">
           ${an.goalkeeperMarkets.map(gk =>
             oddButtonHtml(match, gk.id, gk.label, gk.sub, gk.odd)
           ).join("")}
@@ -874,7 +895,7 @@ function renderMarketsForMatch(match) {
           <div class="market-block-title">🍺 Quote Goliardiche &amp; Spogliatoio</div>
           <span class="market-badge">Solo per veri intenditori</span>
         </div>
-        <div class="odds-grid">
+        <div class="odds-grid list-mobile">
           ${an.goliardicMarkets.map(gm =>
             oddButtonHtml(match, gm.id, gm.label, gm.sub, gm.odd)
           ).join("")}
@@ -936,7 +957,9 @@ function setQuickStake(amount) {
 
 function renderBetSlip() {
   const countEl = document.getElementById("betslipCount");
+  const mobCountEl = document.getElementById("mobSlipCount");
   const bodyEl = document.getElementById("betslipBody");
+  if (mobCountEl) mobCountEl.textContent = appState.betSlip.length;
   if (!countEl || !bodyEl) return;
 
   countEl.textContent = appState.betSlip.length;
@@ -1021,6 +1044,7 @@ function placeBetSlip() {
   if (!appState.betSlip.length) return;
   const currentUser = getCurrentUser();
   if (!currentUser) {
+    closeMobileBetSlip();
     openLoginModal();
     showToast("🔑 Fai prima l'accesso rapido con il tuo nome per giocare la schedina!");
     return;
@@ -1073,6 +1097,7 @@ function placeBetSlip() {
   saveBetSlips(slips);
 
   appState.betSlip = [];
+  closeMobileBetSlip();
   renderAuthHeader();
   renderBettingTab();
   renderBetSlip();
