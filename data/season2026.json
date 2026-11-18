@@ -1,0 +1,412 @@
+{
+  "team": {
+    "name": "Oppidum Sport Cagliari",
+    "shortName": "Oppidum S. Cagliari",
+    "league": "Serie C Maschile — Girone 5 (C.R. Sardegna)",
+    "pool": "Impianto Natatorio \"G. Sicbaldi\" Terramaini — Cagliari",
+    "coach": "Chicco Cannas",
+    "assistantCoach": "Federico Romeo",
+    "colors": {
+      "red": "#c8102e",
+      "navy": "#003087",
+      "white": "#ffffff"
+    }
+  },
+  "opponentsOrder": [
+    { "code": "VIS", "name": "RN Roma Vis Nova", "leg": "Andata", "matchday": 1 },
+    { "code": "ANA", "name": "Anaconda PN", "leg": "Andata", "matchday": 2 },
+    { "code": "AQU", "name": "Aqvaroma", "leg": "Andata", "matchday": 3 },
+    { "code": "IMP", "name": "Imperium", "leg": "Andata", "matchday": 4 },
+    { "code": "BEL", "name": "Bellator Frusino", "leg": "Andata", "matchday": 5 },
+    { "code": "DEV", "name": "De Virtute Roma", "leg": "Andata", "matchday": 6 },
+    { "code": "CR",  "name": "Castelli Romani", "leg": "Andata", "matchday": 7 },
+    { "code": "RN",  "name": "RN Cagliari", "leg": "Andata", "matchday": 8 },
+    { "code": "PG",  "name": "Promogest Quartu SE", "leg": "Andata", "matchday": 9 },
+    { "code": "VIS", "name": "RN Roma Vis Nova", "leg": "Ritorno", "matchday": 10 },
+    { "code": "ANA", "name": "Anaconda PN", "leg": "Ritorno", "matchday": 11 },
+    { "code": "AQU", "name": "Aqvaroma", "leg": "Ritorno", "matchday": 12 },
+    { "code": "IMP", "name": "Imperium", "leg": "Ritorno", "matchday": 13 },
+    { "code": "BEL", "name": "Bellator Frusino", "leg": "Ritorno", "matchday": 14 },
+    { "code": "DEV", "name": "De Virtute Roma", "leg": "Ritorno", "matchday": 15 },
+    { "code": "CR",  "name": "Castelli Romani", "leg": "Ritorno", "matchday": 16 },
+    { "code": "RN",  "name": "RN Cagliari", "leg": "Ritorno", "matchday": 17 },
+    { "code": "PG",  "name": "Promogest Quartu SE", "leg": "Ritorno", "matchday": 18 }
+  ],
+  "players": [
+    {
+      "id": "atzeni",
+      "name": "ATZENI",
+      "role": "Portiere",
+      "active": true,
+      "isGoalkeeper": true,
+      "goalsByMatch": [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      "totalGoals2026": 0,
+      "nickname": "La Saracinesca",
+      "note": "Portiere ufficiale della rosa attuale"
+    },
+    {
+      "id": "faret",
+      "name": "FARET",
+      "role": "Portiere",
+      "active": true,
+      "isGoalkeeper": true,
+      "goalsByMatch": [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+      "totalGoals2026": 0,
+      "nickname": "Il Muro di Terramaini",
+      "note": "Portiere ufficiale della rosa attuale"
+    },
+    {
+      "id": "melis",
+      "name": "MELIS",
+      "role": "Attaccante / Bomber",
+      "active": true,
+      "isGoalkeeper": false,
+      "goalsByMatch": [1, 2, 0, 1, 3, 0, 2, 0, 2, 1, 4, 3, 1, 4, 3, 1, 3, 3],
+      "totalGoals2026": 34,
+      "nickname": "Capocannoniere (34 gol)"
+    },
+    {
+      "id": "piras",
+      "name": "PIRAS",
+      "role": "Attaccante / Centrovasca",
+      "active": true,
+      "isGoalkeeper": false,
+      "goalsByMatch": [1, 2, 1, 2, 0, 2, 1, 2, 2, 2, 2, 1, 0, 1, 0, 1, 1, 3],
+      "totalGoals2026": 24,
+      "nickname": "Il Cecchino (24 gol)"
+    },
+    {
+      "id": "de_giudici",
+      "name": "DE GIUDICI",
+      "role": "Attaccante / Universale",
+      "active": true,
+      "isGoalkeeper": false,
+      "goalsByMatch": [0, 0, 2, 1, 0, 1, 0, 0, 1, 1, 4, 2, 0, 0, 0, 2, 2, 2],
+      "totalGoals2026": 18,
+      "nickname": "Uomo da Ritorno (18 gol)"
+    },
+    {
+      "id": "sacco",
+      "name": "SACCO",
+      "role": "Centrovasca / Difensore",
+      "active": true,
+      "isGoalkeeper": false,
+      "goalsByMatch": [0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 2, 0, 2, 1, 1, 2, 0, 1],
+      "totalGoals2026": 12,
+      "nickname": "Sentenza nel Ritorno (12 gol)"
+    },
+    {
+      "id": "ballestri",
+      "name": "BALLESTRI",
+      "role": "Centroboa / Attaccante",
+      "active": true,
+      "isGoalkeeper": false,
+      "goalsByMatch": [3, 0, 0, 0, 1, 0, 0, 1, 2, 0, 0, 0, 1, 1, 0, 1, 0, 0],
+      "totalGoals2026": 10,
+      "nickname": "Tripletta all'Esordio (10 gol)"
+    },
+    {
+      "id": "petretto",
+      "name": "PETRETTO",
+      "role": "Difensore / Centrovasca",
+      "active": true,
+      "isGoalkeeper": false,
+      "goalsByMatch": [0, 1, 0, 1, 0, 2, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0],
+      "totalGoals2026": 7,
+      "nickname": "Garanzia (7 gol)"
+    },
+    {
+      "id": "erriu",
+      "name": "ERRIU",
+      "role": "Attaccante / Esterno",
+      "active": true,
+      "isGoalkeeper": false,
+      "goalsByMatch": [0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 3, 0, 0, 1, 0],
+      "totalGoals2026": 6,
+      "nickname": "Hat-trick al Bellator (6 gol)"
+    },
+    {
+      "id": "cannas",
+      "name": "CANNAS",
+      "role": "Universale",
+      "active": true,
+      "isGoalkeeper": false,
+      "goalsByMatch": [0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0],
+      "totalGoals2026": 5,
+      "nickname": "Cinque Perle (5 gol)"
+    },
+    {
+      "id": "pilia_fl",
+      "name": "PILIA FL",
+      "role": "Centrovasca",
+      "active": true,
+      "isGoalkeeper": false,
+      "goalsByMatch": [0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      "totalGoals2026": 3,
+      "nickname": "Specialista del Girone d'Andata"
+    },
+    {
+      "id": "troncia",
+      "name": "TRONCIA",
+      "role": "Difensore",
+      "active": true,
+      "isGoalkeeper": false,
+      "goalsByMatch": [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0],
+      "totalGoals2026": 3,
+      "nickname": "Gol Pesanti"
+    },
+    {
+      "id": "pieroni",
+      "name": "PIERONI",
+      "role": "Esterno",
+      "active": true,
+      "isGoalkeeper": false,
+      "goalsByMatch": [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0],
+      "totalGoals2026": 2,
+      "nickname": "Precisione Chirurgica"
+    },
+    {
+      "id": "pilia_fb",
+      "name": "PILIA FB",
+      "role": "Difensore",
+      "active": true,
+      "isGoalkeeper": false,
+      "goalsByMatch": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+      "totalGoals2026": 1,
+      "nickname": "Il Gol della Bandiera"
+    },
+    {
+      "id": "morzetti",
+      "name": "MORZETTI",
+      "role": "Difensore / Universale",
+      "active": true,
+      "isGoalkeeper": false,
+      "goalsByMatch": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      "totalGoals2026": 0,
+      "nickname": "Quota Esplosiva per il 1° Gol"
+    },
+    {
+      "id": "murtas",
+      "name": "MURTAS",
+      "role": "Difensore / Universale",
+      "active": true,
+      "isGoalkeeper": false,
+      "goalsByMatch": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      "totalGoals2026": 0,
+      "nickname": "Quota Esplosiva per il 1° Gol"
+    },
+    {
+      "id": "orru",
+      "name": "ORRU'",
+      "role": "Difensore / Universale",
+      "active": true,
+      "isGoalkeeper": false,
+      "goalsByMatch": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      "totalGoals2026": 0,
+      "nickname": "Quota Esplosiva per il 1° Gol"
+    },
+    {
+      "id": "fortini",
+      "name": "FORTINI",
+      "role": "Ex Giocatore (Stagione 2026)",
+      "active": false,
+      "isGoalkeeper": false,
+      "goalsByMatch": [1, 1, 0, 1, 2, 1, 3, 1, 1, 4, 0, 1, 0, 0, 0, 3, 0, 1],
+      "totalGoals2026": 20,
+      "nickname": "Ex Rosa (20 gol nel 2026)"
+    },
+    {
+      "id": "frau",
+      "name": "FRAU",
+      "role": "Ex Giocatore (Stagione 2026)",
+      "active": false,
+      "isGoalkeeper": false,
+      "goalsByMatch": [0, 0, 2, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      "totalGoals2026": 4,
+      "nickname": "Ex Rosa (4 gol nel 2026)"
+    }
+  ],
+  "teamTotalsByMatch": [7, 9, 6, 7, 6, 8, 8, 6, 10, 11, 13, 8, 5, 10, 5, 12, 8, 10],
+  "matchdays": [
+    {
+      "day": 1,
+      "matches": [
+        { "date": "17 gen 2026", "home": "Bellator Frusino", "away": "De Virtute Roma", "scoreHome": 12, "scoreAway": 10 },
+        { "date": "24 gen 2026", "home": "Promogest Quartu SE", "away": "Aqvaroma", "scoreHome": 4, "scoreAway": 12 },
+        { "date": "24 gen 2026", "home": "RN Cagliari", "away": "Anaconda PN", "scoreHome": 11, "scoreAway": 10 },
+        { "date": "24 gen 2026", "home": "RN Roma Vis Nova", "away": "Oppidum S. Cagliari", "scoreHome": 16, "scoreAway": 7 },
+        { "date": "24 gen 2026", "home": "Imperium", "away": "Castelli Romani", "scoreHome": 6, "scoreAway": 12 }
+      ]
+    },
+    {
+      "day": 2,
+      "matches": [
+        { "date": "21 gen 2026", "home": "Bellator Frusino", "away": "Aqvaroma", "scoreHome": 18, "scoreAway": 11 },
+        { "date": "31 gen 2026", "home": "Castelli Romani", "away": "RN Cagliari", "scoreHome": 8, "scoreAway": 7 },
+        { "date": "31 gen 2026", "home": "RN Roma Vis Nova", "away": "Promogest Quartu SE", "scoreHome": 14, "scoreAway": 12 },
+        { "date": "31 gen 2026", "home": "Oppidum S. Cagliari", "away": "Anaconda PN", "scoreHome": 9, "scoreAway": 11 },
+        { "date": "31 gen 2026", "home": "De Virtute Roma", "away": "Imperium", "scoreHome": 10, "scoreAway": 9 }
+      ]
+    },
+    {
+      "day": 3,
+      "matches": [
+        { "date": "7 feb 2026", "home": "De Virtute Roma", "away": "Promogest Quartu SE", "scoreHome": 20, "scoreAway": 3 },
+        { "date": "7 feb 2026", "home": "RN Cagliari", "away": "RN Roma Vis Nova", "scoreHome": 10, "scoreAway": 12 },
+        { "date": "7 feb 2026", "home": "Anaconda PN", "away": "Castelli Romani", "scoreHome": 14, "scoreAway": 13 },
+        { "date": "8 feb 2026", "home": "Aqvaroma", "away": "Oppidum S. Cagliari", "scoreHome": 15, "scoreAway": 6 },
+        { "date": "11 feb 2026", "home": "Bellator Frusino", "away": "Imperium", "scoreHome": 22, "scoreAway": 8 }
+      ]
+    },
+    {
+      "day": 4,
+      "matches": [
+        { "date": "14 feb 2026", "home": "De Virtute Roma", "away": "RN Cagliari", "scoreHome": 11, "scoreAway": 8 },
+        { "date": "14 feb 2026", "home": "Bellator Frusino", "away": "Promogest Quartu SE", "scoreHome": 15, "scoreAway": 7 },
+        { "date": "14 feb 2026", "home": "Oppidum S. Cagliari", "away": "Imperium", "scoreHome": 7, "scoreAway": 9 },
+        { "date": "14 feb 2026", "home": "RN Roma Vis Nova", "away": "Castelli Romani", "scoreHome": 10, "scoreAway": 15 },
+        { "date": "14 feb 2026", "home": "Anaconda PN", "away": "Aqvaroma", "scoreHome": 10, "scoreAway": 9 }
+      ]
+    },
+    {
+      "day": 5,
+      "matches": [
+        { "date": "21 feb 2026", "home": "RN Cagliari", "away": "Imperium", "scoreHome": 14, "scoreAway": 6 },
+        { "date": "21 feb 2026", "home": "Oppidum S. Cagliari", "away": "Bellator Frusino", "scoreHome": 6, "scoreAway": 19 },
+        { "date": "21 feb 2026", "home": "Aqvaroma", "away": "RN Roma Vis Nova", "scoreHome": 12, "scoreAway": 10 },
+        { "date": "21 feb 2026", "home": "Anaconda PN", "away": "De Virtute Roma", "scoreHome": 10, "scoreAway": 13 },
+        { "date": "22 feb 2026", "home": "Castelli Romani", "away": "Promogest Quartu SE", "scoreHome": 17, "scoreAway": 8 }
+      ]
+    },
+    {
+      "day": 6,
+      "matches": [
+        { "date": "28 feb 2026", "home": "Castelli Romani", "away": "Bellator Frusino", "scoreHome": 9, "scoreAway": 13 },
+        { "date": "28 feb 2026", "home": "Oppidum S. Cagliari", "away": "De Virtute Roma", "scoreHome": 8, "scoreAway": 16 },
+        { "date": "28 feb 2026", "home": "RN Roma Vis Nova", "away": "Anaconda PN", "scoreHome": 6, "scoreAway": 13 },
+        { "date": "1 mar 2026", "home": "Aqvaroma", "away": "RN Cagliari", "scoreHome": 8, "scoreAway": 8 },
+        { "date": "1 mar 2026", "home": "Imperium", "away": "Promogest Quartu SE", "scoreHome": 12, "scoreAway": 4 }
+      ]
+    },
+    {
+      "day": 7,
+      "matches": [
+        { "date": "4 mar 2026", "home": "Promogest Quartu SE", "away": "RN Cagliari", "scoreHome": 12, "scoreAway": 14 },
+        { "date": "7 mar 2026", "home": "RN Roma Vis Nova", "away": "Imperium", "scoreHome": 8, "scoreAway": 7 },
+        { "date": "7 mar 2026", "home": "Bellator Frusino", "away": "Anaconda PN", "scoreHome": 16, "scoreAway": 10 },
+        { "date": "7 mar 2026", "home": "De Virtute Roma", "away": "Aqvaroma", "scoreHome": 12, "scoreAway": 11 },
+        { "date": "8 mar 2026", "home": "Castelli Romani", "away": "Oppidum S. Cagliari", "scoreHome": 16, "scoreAway": 8 }
+      ]
+    },
+    {
+      "day": 8,
+      "matches": [
+        { "date": "14 mar 2026", "home": "RN Cagliari", "away": "Oppidum S. Cagliari", "scoreHome": 13, "scoreAway": 6 },
+        { "date": "14 mar 2026", "home": "Anaconda PN", "away": "Promogest Quartu SE", "scoreHome": 18, "scoreAway": 13 },
+        { "date": "14 mar 2026", "home": "Aqvaroma", "away": "Imperium", "scoreHome": 8, "scoreAway": 10 },
+        { "date": "14 mar 2026", "home": "De Virtute Roma", "away": "Castelli Romani", "scoreHome": 15, "scoreAway": 14 },
+        { "date": "17 mar 2026", "home": "Bellator Frusino", "away": "RN Roma Vis Nova", "scoreHome": 15, "scoreAway": 9 }
+      ]
+    },
+    {
+      "day": 9,
+      "matches": [
+        { "date": "21 mar 2026", "home": "Oppidum S. Cagliari", "away": "Promogest Quartu SE", "scoreHome": 10, "scoreAway": 13 },
+        { "date": "21 mar 2026", "home": "RN Roma Vis Nova", "away": "De Virtute Roma", "scoreHome": 11, "scoreAway": 21 },
+        { "date": "21 mar 2026", "home": "Castelli Romani", "away": "Aqvaroma", "scoreHome": 14, "scoreAway": 11 },
+        { "date": "21 mar 2026", "home": "Imperium", "away": "Anaconda PN", "scoreHome": 8, "scoreAway": 11 },
+        { "date": "22 mar 2026", "home": "Bellator Frusino", "away": "RN Cagliari", "scoreHome": 5, "scoreAway": 9 }
+      ]
+    },
+    {
+      "day": 10,
+      "matches": [
+        { "date": "28 mar 2026", "home": "Aqvaroma", "away": "Promogest Quartu SE", "scoreHome": 16, "scoreAway": 14 },
+        { "date": "28 mar 2026", "home": "Oppidum S. Cagliari", "away": "RN Roma Vis Nova", "scoreHome": 11, "scoreAway": 14 },
+        { "date": "28 mar 2026", "home": "Anaconda PN", "away": "RN Cagliari", "scoreHome": 8, "scoreAway": 12 },
+        { "date": "28 mar 2026", "home": "Castelli Romani", "away": "Imperium", "scoreHome": 8, "scoreAway": 10 },
+        { "date": "28 mar 2026", "home": "De Virtute Roma", "away": "Bellator Frusino", "scoreHome": 10, "scoreAway": 12 }
+      ]
+    },
+    {
+      "day": 11,
+      "matches": [
+        { "date": "11 apr 2026", "home": "RN Cagliari", "away": "Castelli Romani", "scoreHome": 10, "scoreAway": 6 },
+        { "date": "11 apr 2026", "home": "Promogest Quartu SE", "away": "RN Roma Vis Nova", "scoreHome": 13, "scoreAway": 21 },
+        { "date": "11 apr 2026", "home": "Anaconda PN", "away": "Oppidum S. Cagliari", "scoreHome": 13, "scoreAway": 13 },
+        { "date": "11 apr 2026", "home": "Imperium", "away": "De Virtute Roma", "scoreHome": 13, "scoreAway": 19 },
+        { "date": "12 apr 2026", "home": "Aqvaroma", "away": "Bellator Frusino", "scoreHome": 11, "scoreAway": 12 }
+      ]
+    },
+    {
+      "day": 12,
+      "matches": [
+        { "date": "18 apr 2026", "home": "Promogest Quartu SE", "away": "De Virtute Roma", "scoreHome": 13, "scoreAway": 20 },
+        { "date": "18 apr 2026", "home": "RN Roma Vis Nova", "away": "RN Cagliari", "scoreHome": 7, "scoreAway": 6 },
+        { "date": "18 apr 2026", "home": "Oppidum S. Cagliari", "away": "Aqvaroma", "scoreHome": 8, "scoreAway": 14 },
+        { "date": "18 apr 2026", "home": "Castelli Romani", "away": "Anaconda PN", "scoreHome": 11, "scoreAway": 9 },
+        { "date": "18 apr 2026", "home": "Imperium", "away": "Bellator Frusino", "scoreHome": 13, "scoreAway": 15 }
+      ]
+    },
+    {
+      "day": 13,
+      "matches": [
+        { "date": "19 apr 2026", "home": "Castelli Romani", "away": "RN Roma Vis Nova", "scoreHome": 14, "scoreAway": 15 },
+        { "date": "25 apr 2026", "home": "Imperium", "away": "Oppidum S. Cagliari", "scoreHome": 13, "scoreAway": 5 },
+        { "date": "25 apr 2026", "home": "RN Cagliari", "away": "De Virtute Roma", "scoreHome": 11, "scoreAway": 13 },
+        { "date": "26 apr 2026", "home": "Aqvaroma", "away": "Anaconda PN", "scoreHome": 12, "scoreAway": 8 },
+        { "date": "26 apr 2026", "home": "Promogest Quartu SE", "away": "Bellator Frusino", "scoreHome": 13, "scoreAway": 21 }
+      ]
+    },
+    {
+      "day": 14,
+      "matches": [
+        { "date": "28 apr 2026", "home": "RN Roma Vis Nova", "away": "Aqvaroma", "scoreHome": 11, "scoreAway": 13 },
+        { "date": "2 mag 2026", "home": "Promogest Quartu SE", "away": "Castelli Romani", "scoreHome": 14, "scoreAway": 15 },
+        { "date": "2 mag 2026", "home": "Bellator Frusino", "away": "Oppidum S. Cagliari", "scoreHome": 13, "scoreAway": 10 },
+        { "date": "5 mag 2026", "home": "De Virtute Roma", "away": "Anaconda PN", "scoreHome": 10, "scoreAway": 8 },
+        { "date": "24 mag 2026", "home": "Imperium", "away": "RN Cagliari", "scoreHome": 10, "scoreAway": 16 }
+      ]
+    },
+    {
+      "day": 15,
+      "matches": [
+        { "date": "9 mag 2026", "home": "De Virtute Roma", "away": "Oppidum S. Cagliari", "scoreHome": 17, "scoreAway": 5 },
+        { "date": "9 mag 2026", "home": "RN Cagliari", "away": "Aqvaroma", "scoreHome": 15, "scoreAway": 11 },
+        { "date": "9 mag 2026", "home": "Bellator Frusino", "away": "Castelli Romani", "scoreHome": 20, "scoreAway": 9 },
+        { "date": "9 mag 2026", "home": "Anaconda PN", "away": "RN Roma Vis Nova", "scoreHome": 13, "scoreAway": 17 },
+        { "date": "28 mag 2026", "home": "Promogest Quartu SE", "away": "Imperium", "scoreHome": 12, "scoreAway": 16 }
+      ]
+    },
+    {
+      "day": 16,
+      "matches": [
+        { "date": "16 mag 2026", "home": "Aqvaroma", "away": "De Virtute Roma", "scoreHome": 9, "scoreAway": 13 },
+        { "date": "16 mag 2026", "home": "Imperium", "away": "RN Roma Vis Nova", "scoreHome": 11, "scoreAway": 15 },
+        { "date": "16 mag 2026", "home": "Oppidum S. Cagliari", "away": "Castelli Romani", "scoreHome": 12, "scoreAway": 15 },
+        { "date": "16 mag 2026", "home": "RN Cagliari", "away": "Promogest Quartu SE", "scoreHome": 23, "scoreAway": 4 },
+        { "date": "16 mag 2026", "home": "Anaconda PN", "away": "Bellator Frusino", "scoreHome": 8, "scoreAway": 15 }
+      ]
+    },
+    {
+      "day": 17,
+      "matches": [
+        { "date": "23 mag 2026", "home": "Promogest Quartu SE", "away": "Anaconda PN", "scoreHome": 8, "scoreAway": 19 },
+        { "date": "23 mag 2026", "home": "RN Roma Vis Nova", "away": "Bellator Frusino", "scoreHome": 11, "scoreAway": 16 },
+        { "date": "23 mag 2026", "home": "Oppidum S. Cagliari", "away": "RN Cagliari", "scoreHome": 8, "scoreAway": 11 },
+        { "date": "23 mag 2026", "home": "Imperium", "away": "Aqvaroma", "scoreHome": 10, "scoreAway": 10 },
+        { "date": "24 mag 2026", "home": "Castelli Romani", "away": "De Virtute Roma", "scoreHome": 14, "scoreAway": 12 }
+      ]
+    },
+    {
+      "day": 18,
+      "matches": [
+        { "date": "30 mag 2026", "home": "Promogest Quartu SE", "away": "Oppidum S. Cagliari", "scoreHome": 9, "scoreAway": 10 },
+        { "date": "30 mag 2026", "home": "De Virtute Roma", "away": "RN Roma Vis Nova", "scoreHome": 15, "scoreAway": 12 },
+        { "date": "30 mag 2026", "home": "Aqvaroma", "away": "Castelli Romani", "scoreHome": 13, "scoreAway": 7 },
+        { "date": "30 mag 2026", "home": "RN Cagliari", "away": "Bellator Frusino", "scoreHome": 13, "scoreAway": 13 },
+        { "date": "30 mag 2026", "home": "Anaconda PN", "away": "Imperium", "scoreHome": 9, "scoreAway": 11 }
+      ]
+    }
+  ]
+}

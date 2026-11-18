@@ -1,0 +1,8 @@
+.agents/
+.claude/
+.taste-skill/
+skills-lock.json
+shots/
+node_modules/
+.DS_Store
+Thumbs.db
