@@ -6,11 +6,11 @@
    ============================================================ */
 
 const STORAGE_KEYS = {
-  USERS: "oppidum_season_users_v12",
-  CURRENT_USER: "oppidum_season_current_user_v12",
-  BETS: "oppidum_season_bets_v12",
-  MATCHES: "oppidum_season_matches_v12",
-  APPEARANCES_REF: "oppidum_season_hist_apps_v12"
+  USERS: "oppidum_season_users_v13",
+  CURRENT_USER: "oppidum_season_current_user_v13",
+  BETS: "oppidum_season_bets_v13",
+  MATCHES: "oppidum_season_matches_v13",
+  APPEARANCES_REF: "oppidum_season_hist_apps_v13"
 };
 
 const CLOUD_SYNC_URL = "https://api.restful-api.dev/objects/ff808181a09d98f701a1ef0b06e131f8";
@@ -487,6 +487,8 @@ function generateAiOddsForMatch(opponentName, isHome = true, boostOppidum = 1.15
 
   const gkSaveLine = Math.max(8.5, Math.round(lambdaOpponent * 0.85) - 0.5);
   const goalkeeperMarkets = [
+    { id: "gk_atzeni_goal",  label: "⚽ Gol di ATZENI in partita!", sub: "Tiro da porta a porta o salita sul finale", odd: 15.00 },
+    { id: "gk_faret_goal",   label: "⚽ Gol di FARET in partita!",  sub: "Tiro da porta a porta o salita sul finale", odd: 15.00 },
     { id: "gk_atzeni_saves", label: `🧤 ATZENI Over ${gkSaveLine} parate`, sub: "Specialista tra i pali", odd: 1.85 },
     { id: "gk_faret_saves",  label: `🧤 FARET Over ${gkSaveLine} parate`, sub: "Muro di Terramaini", odd: 1.85 },
     { id: "gk_rigore",       label: "🧤 ATZENI o FARET para almeno un rigore (5m)", sub: "Boato della panchina", odd: 2.75 },
