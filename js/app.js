@@ -57,22 +57,22 @@ const HISTORICAL_AI_REFERENCE = {
   // Rosa Ufficiale Nuova Stagione (19 giocatori):
   // - Portieri: Atzeni, Faret
   // - Centroboa: Piras, Ballestri, Pittotti
-  // - Difensori: Pilia FL, Morzetti
-  // - Esterni / Fasce: tutti gli altri
+  // - Difensori: Pilia FL (Capitano), Morzetti, Pieroni
+  // - Esterni / Fasce: De Giudici (Vice Capitano) e tutti gli altri
   roster: [
     { id: "atzeni",     name: "ATZENI",     role: "Portiere",  isGk: true,  histGoals: 0,  histApps: 18, note: "Portiere" },
     { id: "faret",      name: "FARET",      role: "Portiere",  isGk: true,  histGoals: 0,  histApps: 18, note: "Portiere" },
     { id: "melis",      name: "MELIS",      role: "Fascia",    isGk: false, histGoals: 34, histApps: 18, note: "Giocatore di Fascia" },
     { id: "piras",      name: "PIRAS",      role: "Centroboa", isGk: false, histGoals: 24, histApps: 18, note: "Centroboa" },
-    { id: "de_giudici", name: "DE GIUDICI", role: "Fascia",    isGk: false, histGoals: 18, histApps: 16, note: "Giocatore di Fascia" },
+    { id: "de_giudici", name: "DE GIUDICI", role: "Fascia",    isGk: false, histGoals: 18, histApps: 16, note: "Vice Capitano · Fascia", leadership: "Vice Capitano" },
     { id: "sacco",      name: "SACCO",      role: "Fascia",    isGk: false, histGoals: 12, histApps: 16, note: "Giocatore di Fascia" },
     { id: "ballestri",  name: "BALLESTRI",  role: "Centroboa", isGk: false, histGoals: 10, histApps: 15, note: "Centroboa" },
     { id: "petretto",   name: "PETRETTO",   role: "Fascia",    isGk: false, histGoals: 7,  histApps: 15, note: "Giocatore di Fascia" },
     { id: "erriu",      name: "ERRIU",      role: "Fascia",    isGk: false, histGoals: 6,  histApps: 14, note: "Giocatore di Fascia" },
     { id: "cannas",     name: "CANNAS",     role: "Fascia",    isGk: false, histGoals: 5,  histApps: 14, note: "Giocatore di Fascia" },
-    { id: "pilia_fl",   name: "PILIA FL",   role: "Difensore", isGk: false, histGoals: 3,  histApps: 12, note: "Difensore" },
+    { id: "pilia_fl",   name: "PILIA FL",   role: "Difensore", isGk: false, histGoals: 3,  histApps: 12, note: "Capitano · Difensore", leadership: "Capitano" },
     { id: "troncia",    name: "TRONCIA",    role: "Fascia",    isGk: false, histGoals: 3,  histApps: 12, note: "Giocatore di Fascia" },
-    { id: "pieroni",    name: "PIERONI",    role: "Fascia",    isGk: false, histGoals: 2,  histApps: 10, note: "Giocatore di Fascia" },
+    { id: "pieroni",    name: "PIERONI",    role: "Difensore", isGk: false, histGoals: 2,  histApps: 10, note: "Difensore" },
     { id: "pilia_fb",   name: "PILIA FB",   role: "Fascia",    isGk: false, histGoals: 1,  histApps: 10, note: "Giocatore di Fascia" },
     { id: "morzetti",   name: "MORZETTI",   role: "Difensore", isGk: false, histGoals: 0,  histApps: 8,  note: "Difensore" },
     { id: "murtas",     name: "MURTAS",     role: "Fascia",    isGk: false, histGoals: 0,  histApps: 8,  note: "Giocatore di Fascia" },
@@ -1262,11 +1262,16 @@ function renderRosterAndPresenzeTab() {
       const totalGoals = p.histGoals + p.newSeasonGoals;
       const avgGoals = totalApps > 0 ? (totalGoals / totalApps).toFixed(2) : "0.00";
       const baseOddStr = p.isGk ? "@2.75 (Rig.)" : (sc ? `@${sc.odd1Plus.toFixed(2)}` : "—");
+      const capBadge = p.leadership === "Capitano"
+        ? ` <span class="badge badge-gk" title="Capitano">© CAP</span>`
+        : p.leadership === "Vice Capitano"
+          ? ` <span class="badge badge-open" title="Vice Capitano">VICE CAP</span>`
+          : "";
 
       return `
         <tr>
           <td class="hide-mobile"><strong>${idx + 1}</strong></td>
-          <td><strong>${esc(p.name)}</strong></td>
+          <td><strong>${esc(p.name)}</strong>${capBadge}</td>
           <td><span class="badge ${p.isGk ? 'badge-gk' : 'badge-active'}">${esc(p.role)}</span></td>
           <td style="font-weight:700;color:var(--oppidum-sky);">${p.newSeasonApps}</td>
           <td style="font-weight:800;color:var(--gold);">${p.isGk ? "—" : p.newSeasonGoals}</td>
@@ -1288,11 +1293,19 @@ function renderRosterAndPresenzeTab() {
       const roleBadge = p.isGk
         ? `<span class="badge badge-gk">🧤 PORTIERE</span>`
         : `<span class="badge badge-active">🤽 ${esc(p.role.toUpperCase())}</span>`;
+      const capBadge = p.leadership === "Capitano"
+        ? `<span class="badge badge-gk" style="margin-left:5px;">© CAPITANO</span>`
+        : p.leadership === "Vice Capitano"
+          ? `<span class="badge badge-open" style="margin-left:5px;">VICE CAPITANO</span>`
+          : "";
 
       return `
         <div class="player-card ${cardClass}">
-          <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;">
-            <strong style="font-size:1.05rem;">${esc(p.name)}</strong>
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap;">
+            <div>
+              <strong style="font-size:1.02rem;">${esc(p.name)}</strong>
+              ${capBadge}
+            </div>
             ${roleBadge}
           </div>
           <div class="panel-sub">
