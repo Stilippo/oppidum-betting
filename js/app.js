@@ -9,17 +9,17 @@
    ============================================================ */
 
 const STORAGE_KEYS = {
-  USERS: "oppidum_girone6_users_v4",
-  CURRENT_USER: "oppidum_girone6_current_user_v4",
-  BETS: "oppidum_girone6_bets_v4",
-  MATCHES: "oppidum_girone6_matches_v4",
-  APPEARANCES_REF: "oppidum_girone6_hist_apps_v4"
+  USERS: "oppidum_season_users_v6",
+  CURRENT_USER: "oppidum_season_current_user_v6",
+  BETS: "oppidum_season_bets_v6",
+  MATCHES: "oppidum_season_matches_v6",
+  APPEARANCES_REF: "oppidum_season_hist_apps_v6"
 };
 
 const STARTING_CREDITS = 100;
 
 // ============================================================
-// 1. GIRONE 6 UFFICIALE (C.R. SARDEGNA) & RIFERIMENTO AI INTERNO
+// 1. SOCIETÀ DEL CAMPIONATO & RIFERIMENTO AI INTERNO
 // ============================================================
 const GIRONE_6_TEAMS = [
   "ANACONDA PALLANUOTO",
@@ -35,11 +35,19 @@ const GIRONE_6_TEAMS = [
 ];
 
 const HISTORICAL_AI_REFERENCE = {
-  // Parametri di forza stimati dall'AI (combinando i dati reali della scorsa
-  // stagione per chi c'era già + rating Serie C per le nuove del Girone 6)
+  // Parametri di forza calcolati sulle 18 giornate della scorsa stagione + Girone 6
   teamsStrength: {
+    "Bellator Frusino":        { gf: 277, ga: 185, note: "Avversaria di vertice · Attacco molto prolifico" },
+    "De Virtute Roma":         { gf: 263, ga: 192, note: "Formazione capitolina solida e ben strutturata" },
+    "RN Cagliari":             { gf: 214, ga: 162, note: "Derby cittadino di Cagliari · Sfida ad alta intensità" },
     "R.N. CAGLIARI":           { gf: 214, ga: 162, note: "Derby cittadino di Cagliari · Sfida ad alta intensità" },
-    "ANACONDA PALLANUOTO":     { gf: 204, ga: 210, note: "Sfida equilibrata e spettacolare del girone" },
+    "Castelli Romani":         { gf: 217, ga: 207, note: "Compagine laziale dal ritmo elevato" },
+    "Aqvaroma":                { gf: 207, ga: 196, note: "Squadra romana ostica ed equilibrata" },
+    "RN Roma Vis Nova":        { gf: 219, ga: 227, note: "Sfida aperta contro la formazione romana" },
+    "Anaconda PN":             { gf: 204, ga: 210, note: "Incontro equilibrato e combattuto su ogni pallone" },
+    "ANACONDA PALLANUOTO":     { gf: 204, ga: 210, note: "Incontro equilibrato e combattuto su ogni pallone" },
+    "Imperium":                { gf: 179, ga: 220, note: "Match importante contro la formazione laziale" },
+    "Promogest Quartu SE":     { gf: 172, ga: 285, note: "Derby sardo · Sfida sentita in vasca" },
     "LAZIO PALLANUOTO":        { gf: 225, ga: 185, note: "Formazione capitolina storica e organizzata" },
     "CENTUMCELLAE PALLANUOTO": { gf: 218, ga: 190, note: "Compagine di Civitavecchia solida e veloce" },
     "ZERO9 TEAM":              { gf: 210, ga: 195, note: "Squadra romana dai ritmi elevati" },
@@ -47,6 +55,7 @@ const HISTORICAL_AI_REFERENCE = {
     "ANTARES N e PN LATINA":   { gf: 198, ga: 205, note: "Sfida ostica contro la formazione di Latina" },
     "BABEL":                   { gf: 195, ga: 208, note: "Partita aperta contro il club romano" },
     "AQUADEMIA":               { gf: 190, ga: 212, note: "Match importante per muovere la classifica" },
+    "Oppidum S. Cagliari":     { gf: 149, ga: 247, note: "Oppidum Sport Cagliari · Piscina Terramaini" },
     "OPPIDUM SPORT CAGLIARI":  { gf: 149, ga: 247, note: "Oppidum Sport Cagliari · Piscina Terramaini" }
   },
   // Rosa Ufficiale Nuova Stagione (19 giocatori: 2 portieri + 17 movimento)
@@ -112,10 +121,18 @@ function getUsers() {
   if (raw) {
     try {
       const list = JSON.parse(raw);
-      if (Array.isArray(list)) return list;
+      if (Array.isArray(list) && list.length) return list;
     } catch (e) {}
   }
-  return [];
+  const initialUsers = [
+    { id: "u_1", name: "Scommettitore 1", credits: 145, wins: 2, losses: 0, totalStaked: 30, totalWon: 75 },
+    { id: "u_2", name: "Scommettitore 2", credits: 120, wins: 1, losses: 1, totalStaked: 25, totalWon: 45 },
+    { id: "u_3", name: "Scommettitore 3", credits: 100, wins: 0, losses: 0, totalStaked: 0,  totalWon: 0  },
+    { id: "u_4", name: "Scommettitore 4", credits: 90,  wins: 0, losses: 1, totalStaked: 10, totalWon: 0  },
+    { id: "u_5", name: "Scommettitore 5", credits: 80,  wins: 0, losses: 1, totalStaked: 20, totalWon: 0  }
+  ];
+  localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(initialUsers));
+  return initialUsers;
 }
 
 function saveUsers(users) {
@@ -447,10 +464,10 @@ function getSeasonMatches() {
   const allIds = getAllRosterIds();
   const exampleMatches = [
     {
-      id: "g6_example_1",
-      title: "Partita di Esempio — Girone 6",
+      id: "ex_match_1",
+      title: "Partita di Esempio 1 — Serie C",
       date: "Calendario in uscita · Piscina Terramaini",
-      opponent: "R.N. CAGLIARI",
+      opponent: "Promogest Quartu SE",
       isHome: true,
       boostOppidum: 1.15,
       status: "open",
@@ -458,13 +475,13 @@ function getSeasonMatches() {
       scoreThem: null,
       presentPlayerIds: [...allIds],
       playerGoals: {},
-      analysis: generateAiOddsForMatch("R.N. CAGLIARI", true, 1.15, allIds)
+      analysis: generateAiOddsForMatch("Promogest Quartu SE", true, 1.15, allIds)
     },
     {
-      id: "g6_example_2",
-      title: "Partita di Esempio — Girone 6",
+      id: "ex_match_2",
+      title: "Partita di Esempio 2 — Serie C",
       date: "Calendario in uscita · Piscina Terramaini",
-      opponent: "ANACONDA PALLANUOTO",
+      opponent: "RN Cagliari",
       isHome: true,
       boostOppidum: 1.15,
       status: "open",
@@ -472,7 +489,7 @@ function getSeasonMatches() {
       scoreThem: null,
       presentPlayerIds: [...allIds],
       playerGoals: {},
-      analysis: generateAiOddsForMatch("ANACONDA PALLANUOTO", true, 1.15, allIds)
+      analysis: generateAiOddsForMatch("RN Cagliari", true, 1.15, allIds)
     }
   ];
   localStorage.setItem(STORAGE_KEYS.MATCHES, JSON.stringify(exampleMatches));
@@ -495,7 +512,7 @@ function saveBetSlips(slips) {
   localStorage.setItem(STORAGE_KEYS.BETS, JSON.stringify(slips));
 }
 
-// Calcola la classifica live del Girone 6 dalle partite refertate della nuova stagione
+// Calcola la classifica live dalle partite refertate della nuova stagione
 function computeGirone6Table() {
   const table = {};
   GIRONE_6_TEAMS.forEach(name => {
@@ -504,7 +521,7 @@ function computeGirone6Table() {
 
   const settled = getSeasonMatches().filter(m => m.status === "settled");
   settled.forEach(m => {
-    const oppName = "OPPIDUM SPORT CAGLIARI";
+    const oppName = "Oppidum S. Cagliari";
     const rivName = m.opponent;
     if (!table[rivName]) {
       table[rivName] = { name: rivName, played: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 };
@@ -1115,7 +1132,7 @@ function renderRosterAndPresenzeTab() {
   if (g6Body) {
     const standings = computeGirone6Table();
     g6Body.innerHTML = standings.map((t, i) => {
-      const isOpp = t.name === "OPPIDUM SPORT CAGLIARI";
+      const isOpp = t.name.toUpperCase().includes("OPPIDUM");
       const diff = t.gf - t.ga;
       return `
         <tr style="${isOpp ? 'background:rgba(200,16,46,0.25);font-weight:700;' : ''}">
