@@ -6,11 +6,11 @@
    ============================================================ */
 
 const STORAGE_KEYS = {
-  USERS: "oppidum_season_users_v10",
-  CURRENT_USER: "oppidum_season_current_user_v10",
-  BETS: "oppidum_season_bets_v10",
-  MATCHES: "oppidum_season_matches_v10",
-  APPEARANCES_REF: "oppidum_season_hist_apps_v10"
+  USERS: "oppidum_season_users_v11",
+  CURRENT_USER: "oppidum_season_current_user_v11",
+  BETS: "oppidum_season_bets_v11",
+  MATCHES: "oppidum_season_matches_v11",
+  APPEARANCES_REF: "oppidum_season_hist_apps_v11"
 };
 
 const CLOUD_SYNC_URL = "https://api.restful-api.dev/objects/ff808181a09d98f701a1ef0b06e131f8";
@@ -350,13 +350,16 @@ function computeNewSeasonPlayerStats(matchesOverride = null) {
   return HISTORICAL_AI_REFERENCE.roster.map(p => {
     let newSeasonApps = 0;
     let newSeasonGoals = 0;
+    let newSeasonFouls = 0;
 
     playedMatches.forEach(m => {
       const presentIds = m.presentPlayerIds || [];
       const goalsMap = m.playerGoals || {};
+      const foulsMap = m.playerFouls || {};
       if (presentIds.includes(p.id)) {
         newSeasonApps++;
         newSeasonGoals += Number(goalsMap[p.id] || 0);
+        newSeasonFouls += Math.min(3, Math.max(0, Number(foulsMap[p.id] || 0)));
       }
     });
 
@@ -364,7 +367,8 @@ function computeNewSeasonPlayerStats(matchesOverride = null) {
       ...p,
       histApps: histApps[p.id] ?? p.histApps,
       newSeasonApps,
-      newSeasonGoals
+      newSeasonGoals,
+      newSeasonFouls
     };
   });
 }
@@ -442,6 +446,7 @@ function generateAiOddsForMatch(opponentName, isHome = true, boostOppidum = 1.15
       playerId: player.id,
       name: player.name,
       role: player.role,
+      leadership: player.leadership || "",
       newSeasonGoals: player.newSeasonGoals,
       newSeasonApps: player.newSeasonApps,
       expectedGoals: Number(playerLambda.toFixed(2)),
@@ -450,6 +455,29 @@ function generateAiOddsForMatch(opponentName, isHome = true, boostOppidum = 1.15
       odd3Plus: probToOdd(p3Plus, 1.05, 2.30, 25.00)
     };
   }).sort((a, b) => a.odd1Plus - b.odd1Plus);
+
+  // Calcolo Quote Espulsioni (Falli Personali: 1, 2 o 3 falli) basato sul ruolo
+  const rivalIntensity = Math.min(1.18, Math.max(0.90, lambdaOpponent / 11.0));
+  const exclusionMarkets = activeFieldPlayers.map(p => {
+    let baseFoulLambda = 0.88; // Giocatori di Fascia
+    if (p.role === "Difensore") baseFoulLambda = 1.58; // Marcatori del centroboa avversario
+    else if (p.role === "Centroboa") baseFoulLambda = 1.22; // Lotta ai 2 metri
+
+    const foulLambda = baseFoulLambda * rivalIntensity;
+    const pFoul1 = 1 - Math.exp(-foulLambda);
+    const pFoul2 = 1 - (poissonPmf(0, foulLambda) + poissonPmf(1, foulLambda));
+    const pFoul3 = 1 - (poissonPmf(0, foulLambda) + poissonPmf(1, foulLambda) + poissonPmf(2, foulLambda));
+
+    return {
+      playerId: p.id,
+      name: p.name,
+      role: p.role,
+      leadership: p.leadership || "",
+      oddFoul1: probToOdd(pFoul1, 1.06, 1.18, 3.50),
+      oddFoul2: probToOdd(pFoul2, 1.06, 1.75, 6.50),
+      oddFoul3: probToOdd(pFoul3, 1.05, 2.90, 14.00)
+    };
+  }).sort((a, b) => a.oddFoul3 - b.oddFoul3);
 
   const gkSaveLine = Math.max(8.5, Math.round(lambdaOpponent * 0.85) - 0.5);
   const goalkeeperMarkets = [
@@ -494,6 +522,7 @@ function generateAiOddsForMatch(opponentName, isHome = true, boostOppidum = 1.15
       oddHandicapOppidum: 1.85
     },
     scorerMarkets,
+    exclusionMarkets,
     goalkeeperMarkets,
     goliardicMarkets
   };
@@ -925,6 +954,52 @@ function renderMarketsForMatch(match) {
                     onclick="toggleBetPick('${esc(match.id)}', '${esc(matchTitle)}', 'SC_${sc.playerId}_3', '${esc(sc.name)} 3+ Gol', ${sc.odd3Plus})">
                     <span class="odd-label">3+ Gol</span>
                     <span class="odd-val">${sc.odd3Plus.toFixed(2)}</span>
+                  </button>
+                </div>
+              </div>
+            `;
+          }).join("")}
+        </div>
+      </div>
+    `;
+  }
+
+  if (cat === "all" || cat === "exclusions") {
+    const exList = an.exclusionMarkets || [];
+    html += `
+      <div class="market-block">
+        <div class="market-block-header">
+          <div class="market-block-title">🟥 Espulsioni — Falli Personali (1, 2 o 3 Falli)</div>
+          <span class="market-badge">1+ Fallo · 2+ Falli · 3 Falli (Definitiva)</span>
+        </div>
+        <div class="odds-grid scorers-grid">
+          ${exList.map(ex => {
+            const sel1 = isPickSelected(match.id, `EX_${ex.playerId}_1`) ? "selected" : "";
+            const sel2 = isPickSelected(match.id, `EX_${ex.playerId}_2`) ? "selected" : "";
+            const sel3 = isPickSelected(match.id, `EX_${ex.playerId}_3`) ? "selected" : "";
+            const matchTitle = match.isHome ? `Oppidum vs ${match.opponent}` : `${match.opponent} vs Oppidum`;
+            const disAttr = closed ? "disabled style='opacity:0.45;cursor:not-allowed;'" : "";
+            return `
+              <div class="scorer-market-row">
+                <div class="scorer-info">
+                  <span class="scorer-name">🟥 ${esc(ex.name)}</span>
+                  <span class="scorer-stat-pill">${esc(ex.role)}</span>
+                </div>
+                <div class="scorer-odds-mini">
+                  <button type="button" class="odd-btn ${sel1}" ${disAttr}
+                    onclick="toggleBetPick('${esc(match.id)}', '${esc(matchTitle)}', 'EX_${ex.playerId}_1', '${esc(ex.name)}: 1+ Fallo Personale', ${ex.oddFoul1})">
+                    <span class="odd-label">1+ Fallo</span>
+                    <span class="odd-val">${ex.oddFoul1.toFixed(2)}</span>
+                  </button>
+                  <button type="button" class="odd-btn ${sel2}" ${disAttr}
+                    onclick="toggleBetPick('${esc(match.id)}', '${esc(matchTitle)}', 'EX_${ex.playerId}_2', '${esc(ex.name)}: 2+ Falli Personali', ${ex.oddFoul2})">
+                    <span class="odd-label">2+ Falli</span>
+                    <span class="odd-val">${ex.oddFoul2.toFixed(2)}</span>
+                  </button>
+                  <button type="button" class="odd-btn ${sel3}" ${disAttr}
+                    onclick="toggleBetPick('${esc(match.id)}', '${esc(matchTitle)}', 'EX_${ex.playerId}_3', '${esc(ex.name)}: 3 Falli (Definitiva)', ${ex.oddFoul3})">
+                    <span class="odd-label">3 Falli (Out)</span>
+                    <span class="odd-val">${ex.oddFoul3.toFixed(2)}</span>
                   </button>
                 </div>
               </div>
@@ -1414,7 +1489,7 @@ function renderRosterAndPresenzeTab() {
           <td><span class="badge ${p.isGk ? 'badge-gk' : 'badge-active'}">${esc(p.role)}</span></td>
           <td style="font-weight:700;color:var(--oppidum-sky);">${p.newSeasonApps}</td>
           <td style="font-weight:800;color:var(--gold);">${p.isGk ? "—" : p.newSeasonGoals}</td>
-          <td class="hide-mobile">${p.isGk ? "Portiere" : `${avgGoals}/g`}</td>
+          <td style="font-weight:700;color:#f87171;">${p.isGk ? "—" : (p.newSeasonFouls || 0)}</td>
           <td class="hide-mobile" style="color:var(--text-muted);font-size:0.8rem;">
             ${p.isGk ? `${p.histApps} pres.` : `${p.histGoals} gol / ${p.histApps}p`}
           </td>
