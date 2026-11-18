@@ -6,11 +6,11 @@
    ============================================================ */
 
 const STORAGE_KEYS = {
-  USERS: "oppidum_season_users_v7",
-  CURRENT_USER: "oppidum_season_current_user_v7",
-  BETS: "oppidum_season_bets_v7",
-  MATCHES: "oppidum_season_matches_v7",
-  APPEARANCES_REF: "oppidum_season_hist_apps_v7"
+  USERS: "oppidum_season_users_v8",
+  CURRENT_USER: "oppidum_season_current_user_v8",
+  BETS: "oppidum_season_bets_v8",
+  MATCHES: "oppidum_season_matches_v8",
+  APPEARANCES_REF: "oppidum_season_hist_apps_v8"
 };
 
 const STARTING_CREDITS = 100;
@@ -54,27 +54,31 @@ const HISTORICAL_AI_REFERENCE = {
     "Oppidum S. Cagliari":     { gf: 149, ga: 247, note: "Oppidum Sport Cagliari · Piscina Terramaini" },
     "OPPIDUM SPORT CAGLIARI":  { gf: 149, ga: 247, note: "Oppidum Sport Cagliari · Piscina Terramaini" }
   },
-  // Rosa Ufficiale Nuova Stagione (19 giocatori: 2 portieri + 17 movimento)
+  // Rosa Ufficiale Nuova Stagione (19 giocatori):
+  // - Portieri: Atzeni, Faret
+  // - Centroboa: Piras, Ballestri, Pittotti
+  // - Difensori: Pilia FL, Morzetti
+  // - Esterni / Fasce: tutti gli altri
   roster: [
-    { id: "atzeni",     name: "ATZENI",     role: "Portiere",    isGk: true,  histGoals: 0,  histApps: 18, note: "Portiere" },
-    { id: "faret",      name: "FARET",      role: "Portiere",    isGk: true,  histGoals: 0,  histApps: 18, note: "Portiere" },
-    { id: "melis",      name: "MELIS",      role: "Attaccante",  isGk: false, histGoals: 34, histApps: 18, note: "Attaccante" },
-    { id: "piras",      name: "PIRAS",      role: "Centrovasca", isGk: false, histGoals: 24, histApps: 18, note: "Attaccante / Centrovasca" },
-    { id: "de_giudici", name: "DE GIUDICI", role: "Universale",  isGk: false, histGoals: 18, histApps: 16, note: "Attaccante / Universale" },
-    { id: "sacco",      name: "SACCO",      role: "Centrovasca", isGk: false, histGoals: 12, histApps: 16, note: "Centrovasca / Difensore" },
-    { id: "ballestri",  name: "BALLESTRI",  role: "Centroboa",   isGk: false, histGoals: 10, histApps: 15, note: "Centroboa" },
-    { id: "petretto",   name: "PETRETTO",   role: "Difensore",   isGk: false, histGoals: 7,  histApps: 15, note: "Difensore / Centrovasca" },
-    { id: "erriu",      name: "ERRIU",      role: "Esterno",     isGk: false, histGoals: 6,  histApps: 14, note: "Esterno / Attaccante" },
-    { id: "cannas",     name: "CANNAS",     role: "Universale",  isGk: false, histGoals: 5,  histApps: 14, note: "Universale" },
-    { id: "pilia_fl",   name: "PILIA FL",   role: "Centrovasca", isGk: false, histGoals: 3,  histApps: 12, note: "Centrovasca" },
-    { id: "troncia",    name: "TRONCIA",    role: "Difensore",   isGk: false, histGoals: 3,  histApps: 12, note: "Difensore" },
-    { id: "pieroni",    name: "PIERONI",    role: "Esterno",     isGk: false, histGoals: 2,  histApps: 10, note: "Esterno" },
-    { id: "pilia_fb",   name: "PILIA FB",   role: "Difensore",   isGk: false, histGoals: 1,  histApps: 10, note: "Difensore" },
-    { id: "morzetti",   name: "MORZETTI",   role: "Universale",  isGk: false, histGoals: 0,  histApps: 8,  note: "Universale" },
-    { id: "murtas",     name: "MURTAS",     role: "Universale",  isGk: false, histGoals: 0,  histApps: 8,  note: "Universale" },
-    { id: "orru",       name: "ORRU'",      role: "Universale",  isGk: false, histGoals: 0,  histApps: 8,  note: "Universale" },
-    { id: "pittotti",   name: "PITTOTTI",   role: "Universale",  isGk: false, histGoals: 0,  histApps: 1,  note: "Universale" },
-    { id: "olla",       name: "OLLA",       role: "Universale",  isGk: false, histGoals: 0,  histApps: 0,  note: "Universale" }
+    { id: "atzeni",     name: "ATZENI",     role: "Portiere",  isGk: true,  histGoals: 0,  histApps: 18, note: "Portiere" },
+    { id: "faret",      name: "FARET",      role: "Portiere",  isGk: true,  histGoals: 0,  histApps: 18, note: "Portiere" },
+    { id: "melis",      name: "MELIS",      role: "Fascia",    isGk: false, histGoals: 34, histApps: 18, note: "Giocatore di Fascia" },
+    { id: "piras",      name: "PIRAS",      role: "Centroboa", isGk: false, histGoals: 24, histApps: 18, note: "Centroboa" },
+    { id: "de_giudici", name: "DE GIUDICI", role: "Fascia",    isGk: false, histGoals: 18, histApps: 16, note: "Giocatore di Fascia" },
+    { id: "sacco",      name: "SACCO",      role: "Fascia",    isGk: false, histGoals: 12, histApps: 16, note: "Giocatore di Fascia" },
+    { id: "ballestri",  name: "BALLESTRI",  role: "Centroboa", isGk: false, histGoals: 10, histApps: 15, note: "Centroboa" },
+    { id: "petretto",   name: "PETRETTO",   role: "Fascia",    isGk: false, histGoals: 7,  histApps: 15, note: "Giocatore di Fascia" },
+    { id: "erriu",      name: "ERRIU",      role: "Fascia",    isGk: false, histGoals: 6,  histApps: 14, note: "Giocatore di Fascia" },
+    { id: "cannas",     name: "CANNAS",     role: "Fascia",    isGk: false, histGoals: 5,  histApps: 14, note: "Giocatore di Fascia" },
+    { id: "pilia_fl",   name: "PILIA FL",   role: "Difensore", isGk: false, histGoals: 3,  histApps: 12, note: "Difensore" },
+    { id: "troncia",    name: "TRONCIA",    role: "Fascia",    isGk: false, histGoals: 3,  histApps: 12, note: "Giocatore di Fascia" },
+    { id: "pieroni",    name: "PIERONI",    role: "Fascia",    isGk: false, histGoals: 2,  histApps: 10, note: "Giocatore di Fascia" },
+    { id: "pilia_fb",   name: "PILIA FB",   role: "Fascia",    isGk: false, histGoals: 1,  histApps: 10, note: "Giocatore di Fascia" },
+    { id: "morzetti",   name: "MORZETTI",   role: "Difensore", isGk: false, histGoals: 0,  histApps: 8,  note: "Difensore" },
+    { id: "murtas",     name: "MURTAS",     role: "Fascia",    isGk: false, histGoals: 0,  histApps: 8,  note: "Giocatore di Fascia" },
+    { id: "orru",       name: "ORRU'",      role: "Fascia",    isGk: false, histGoals: 0,  histApps: 8,  note: "Giocatore di Fascia" },
+    { id: "pittotti",   name: "PITTOTTI",   role: "Centroboa", isGk: false, histGoals: 0,  histApps: 1,  note: "Centroboa" },
+    { id: "olla",       name: "OLLA",       role: "Fascia",    isGk: false, histGoals: 0,  histApps: 0,  note: "Giocatore di Fascia" }
   ],
   // Calendario Ufficiale (Attualmente vuoto perché non ancora uscito; quando uscirà basterà popolarlo qui)
   officialCalendar: []
@@ -1135,12 +1139,12 @@ function renderLeaderboardTab() {
       const netStr = net > 0 ? `+${net}` : `${net}`;
       return `
         <tr>
-          <td style="font-weight:900;font-size:1rem;">${medal}</td>
+          <td style="font-weight:900;">${medal}</td>
           <td><strong>👤 ${esc(u.name)}</strong></td>
-          <td style="color:var(--gold);font-weight:900;font-size:1.05rem;">${u.credits} Crediti 🪙</td>
+          <td style="color:var(--gold);font-weight:900;">${u.credits} Cr.</td>
           <td style="color:${net >= 0 ? '#34d399' : '#f87171'};font-weight:800;">${netStr}</td>
-          <td style="color:#34d399;font-weight:700;">${u.wins || 0}</td>
-          <td style="color:#f87171;font-weight:700;">${u.losses || 0}</td>
+          <td class="hide-mobile" style="color:#34d399;font-weight:700;">${u.wins || 0}</td>
+          <td class="hide-mobile" style="color:#f87171;font-weight:700;">${u.losses || 0}</td>
         </tr>
       `;
     }).join("");
@@ -1157,7 +1161,7 @@ function renderLeaderboardTab() {
 
   slipsBox.innerHTML = slips.map(s => {
     const statusBadge = s.status === "open"
-      ? `<span class="badge badge-open">✅ CONVALIDATA PRIMA DEL FISCHIO</span>`
+      ? `<span class="badge badge-open">✅ CONVALIDATA</span>`
       : s.status === "won"
         ? `<span class="badge badge-won">🏆 VINTA (+${s.potentialPayout} Cr.)</span>`
         : `<span class="badge badge-lost">❌ PERSA (-${s.stake} Cr.)</span>`;
@@ -1167,7 +1171,7 @@ function renderLeaderboardTab() {
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
           <div>
             <strong>👤 ${esc(s.userName)}</strong>
-            <span class="panel-sub" style="margin-left:8px;">🕒 Piazzata il ${esc(s.createdAt)}</span>
+            <span class="panel-sub" style="margin-left:8px;">🕒 ${esc(s.createdAt)}</span>
           </div>
           <div style="display:flex;align-items:center;gap:8px;">
             ${statusBadge}
@@ -1176,9 +1180,9 @@ function renderLeaderboardTab() {
         <div style="font-size:0.84rem;color:#cbd5e1;margin-bottom:8px;">
           ${s.picks.map(p => `<div>• <em>${esc(p.matchTitle)}</em>: <strong>${esc(p.label)}</strong> (<span style="color:var(--gold)">@${p.odd.toFixed(2)}</span>)</div>`).join("")}
         </div>
-        <div style="font-size:0.8rem;color:var(--text-muted);display:flex;justify-content:space-between;border-top:1px solid var(--border);padding-top:6px;">
-          <span>Puntata: <strong>${s.stake} Crediti</strong> · Quota: <strong>${s.totalOdd.toFixed(2)}</strong></span>
-          <span>Vincita Potenziale: <strong style="color:var(--gold)">${s.potentialPayout} Crediti</strong></span>
+        <div style="font-size:0.8rem;color:var(--text-muted);display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px;border-top:1px solid var(--border);padding-top:6px;">
+          <span>Puntata: <strong>${s.stake} Cr.</strong> · Quota: <strong>${s.totalOdd.toFixed(2)}</strong></span>
+          <span>Vincita: <strong style="color:var(--gold)">${s.potentialPayout} Crediti</strong></span>
         </div>
       </div>
     `;
@@ -1203,15 +1207,14 @@ function renderRosterAndPresenzeTab() {
           <td><strong>${i + 1}</strong></td>
           <td>
             <strong>${esc(t.name)}</strong>
-            ${isOpp ? `<span class="badge badge-gk" style="margin-left:6px;">OPPIDUM</span>` : ""}
           </td>
           <td style="font-weight:900;color:var(--gold);">${t.pts}</td>
           <td>${t.played}</td>
-          <td>${t.w}</td>
-          <td>${t.d}</td>
-          <td>${t.l}</td>
-          <td>${t.gf}</td>
-          <td>${t.ga}</td>
+          <td class="hide-mobile">${t.w}</td>
+          <td class="hide-mobile">${t.d}</td>
+          <td class="hide-mobile">${t.l}</td>
+          <td class="hide-mobile">${t.gf}</td>
+          <td class="hide-mobile">${t.ga}</td>
           <td>${diff > 0 ? "+" + diff : diff}</td>
         </tr>
       `;
@@ -1224,22 +1227,22 @@ function renderRosterAndPresenzeTab() {
     const cal = HISTORICAL_AI_REFERENCE.officialCalendar || [];
     if (!cal.length) {
       calContainer.innerHTML = `
-        <div class="market-block" style="text-align:center;padding:24px 16px;">
-          <div style="font-size:2rem;margin-bottom:8px;">🗓️</div>
-          <h4 style="font-family:'Space Grotesk',sans-serif;font-size:1.1rem;margin-bottom:6px;">
+        <div class="market-block" style="text-align:center;padding:20px 14px;">
+          <div style="font-size:1.8rem;margin-bottom:6px;">🗓️</div>
+          <h4 style="font-family:'Space Grotesk',sans-serif;font-size:1.05rem;margin-bottom:6px;">
             Calendario Ufficiale in fase di pubblicazione
           </h4>
-          <p class="panel-sub" style="max-width:560px;margin:0 auto 16px;">
+          <p class="panel-sub" style="max-width:560px;margin:0 auto 14px;">
             Non appena la federazione pubblicherà il calendario ufficiale delle 18 giornate (Andata e Ritorno), tutte le date e gli orari del fischio d'inizio compariranno in questa sezione.
           </p>
-          <div class="odds-grid" style="max-width:780px;margin:0 auto;">
+          <div class="hero-kpis" style="max-width:560px;margin:0 auto;">
             <div class="kpi-box" style="text-align:center;">
-              <div class="kpi-val" style="font-size:1.15rem;">1ª - 9ª Giornata</div>
-              <div class="kpi-lbl">Girone d'Andata · In attesa di date</div>
+              <div class="kpi-val" style="font-size:1.05rem;">1ª - 9ª Giornata</div>
+              <div class="kpi-lbl">Girone d'Andata</div>
             </div>
             <div class="kpi-box" style="text-align:center;">
-              <div class="kpi-val" style="font-size:1.15rem;">10ª - 18ª Giornata</div>
-              <div class="kpi-lbl">Girone di Ritorno · In attesa di date</div>
+              <div class="kpi-val" style="font-size:1.05rem;">10ª - 18ª Giornata</div>
+              <div class="kpi-lbl">Girone di Ritorno</div>
             </div>
           </div>
         </div>
@@ -1258,21 +1261,18 @@ function renderRosterAndPresenzeTab() {
       const totalApps = p.histApps + p.newSeasonApps;
       const totalGoals = p.histGoals + p.newSeasonGoals;
       const avgGoals = totalApps > 0 ? (totalGoals / totalApps).toFixed(2) : "0.00";
-      const baseOddStr = p.isGk ? "Quota Rigore @2.75" : (sc ? `@${sc.odd1Plus.toFixed(2)}` : "—");
+      const baseOddStr = p.isGk ? "@2.75 (Rig.)" : (sc ? `@${sc.odd1Plus.toFixed(2)}` : "—");
 
       return `
         <tr>
-          <td><strong>${idx + 1}</strong></td>
-          <td>
-            <strong>${esc(p.name)}</strong>
-            ${p.isGk ? `<span class="badge badge-gk" style="margin-left:6px;">GK</span>` : ""}
-          </td>
-          <td>${esc(p.role)}</td>
+          <td class="hide-mobile"><strong>${idx + 1}</strong></td>
+          <td><strong>${esc(p.name)}</strong></td>
+          <td><span class="badge ${p.isGk ? 'badge-gk' : 'badge-active'}">${esc(p.role)}</span></td>
           <td style="font-weight:700;color:var(--oppidum-sky);">${p.newSeasonApps}</td>
           <td style="font-weight:800;color:var(--gold);">${p.isGk ? "—" : p.newSeasonGoals}</td>
-          <td>${p.isGk ? "Portiere" : `${avgGoals} gol/gara`}</td>
-          <td style="color:var(--text-muted);font-size:0.8rem;">
-            ${p.isGk ? `${p.histApps} pres. storiche` : `${p.histGoals} gol / ${p.histApps} pres.`}
+          <td class="hide-mobile">${p.isGk ? "Portiere" : `${avgGoals}/g`}</td>
+          <td class="hide-mobile" style="color:var(--text-muted);font-size:0.8rem;">
+            ${p.isGk ? `${p.histApps} pres.` : `${p.histGoals} gol / ${p.histApps}p`}
           </td>
           <td style="font-weight:800;color:var(--gold);">${baseOddStr}</td>
         </tr>
