@@ -681,6 +681,64 @@ body {
   color: #091326;
 }
 
+/* ---------- SUB-MARKET CARDS & SELECTOR ROWS ---------- */
+.sub-market-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  margin-bottom: 12px;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.selector-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  max-width: 100%;
+}
+
+.selector-title {
+  font-size: 0.85rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.market-select {
+  width: auto;
+  max-width: 310px;
+  min-width: 0;
+  padding: 7px 10px;
+  font-weight: 800;
+  font-size: 0.82rem;
+  text-overflow: ellipsis;
+}
+
+.exact-input-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0;
+  max-width: 100%;
+}
+
+.exact-input-row label {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+}
+
+.exact-num-input {
+  width: 72px !important;
+  flex-shrink: 0;
+  padding: 5px 8px !important;
+  font-weight: 800;
+  text-align: center;
+}
+
 /* ---------- SCORER ROW CARD IN MARKETS ---------- */
 .scorer-market-row {
   background: var(--surface);
@@ -1420,6 +1478,31 @@ footer {
     display: none;
   }
 
+  .sub-market-card {
+    padding: 10px;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .selector-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+
+  .selector-title {
+    font-size: 0.8rem;
+  }
+
+  .market-select {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    font-size: 0.8rem !important;
+    padding: 8px 10px !important;
+  }
+
   .odds-grid.two-cols {
     grid-template-columns: repeat(2, 1fr);
     gap: 6px;
@@ -1430,6 +1513,8 @@ footer {
     justify-content: space-between;
     text-align: left;
     padding: 8px 9px;
+    min-width: 0;
+    max-width: 100%;
   }
 
   .odds-grid.list-mobile {

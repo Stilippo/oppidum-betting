@@ -1076,73 +1076,70 @@ function renderMarketsForMatch(match) {
       <!-- 1. OVER / UNDER DINAMICO: TUTTO IL MATCH + CASA + TRASFERTA -->
       <div class="market-block">
         <div class="market-block-header">
-          <div class="market-block-title">🔢 Over / Under Gol — Seleziona il Range (Match · Casa · Trasferta)</div>
-          <span class="market-badge">${ouTotList.length} soglie Match · ${ouHomeList.length} soglie Squadra</span>
+          <div class="market-block-title">🔢 Over / Under Gol — Seleziona il Range</div>
+          <span class="market-badge">${ouTotList.length} soglie Match · ${ouHomeList.length} Squadra</span>
         </div>
 
         <!-- A) Tutto il Match -->
-        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:12px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
-            <strong style="font-size:0.86rem;color:var(--gold);">🤽 Somma Gol Tutto il Match (${esc(homeName)} + ${esc(awayName)})</strong>
-            <div style="display:flex;align-items:center;gap:8px;">
-              <label for="selOuMatch" style="font-size:0.76rem;color:var(--text-muted);">Scegli Soglia (${ouTotList.length} opzioni):</label>
-              <select id="selOuMatch" style="width:auto;padding:6px 10px;font-weight:800;"
-                onchange="updateCustomMarketSelection('ouMatchLine', this.value, '${esc(match.id)}')">
-                ${ouTotList.map(r => `
-                  <option value="${r.line}" ${r.line === selTotRow.line ? "selected" : ""}>
-                    Linea ${r.line} gol (Over @${r.oddOver.toFixed(2)} / Under @${r.oddUnder.toFixed(2)})
-                  </option>
-                `).join("")}
-              </select>
-            </div>
+        <div class="sub-market-card">
+          <div class="selector-row">
+            <label for="selOuMatch" class="selector-title" style="color:var(--gold);">
+              🤽 Somma Gol Tutto il Match (${esc(homeName)} + ${esc(awayName)})
+            </label>
+            <select id="selOuMatch" class="market-select"
+              onchange="updateCustomMarketSelection('ouMatchLine', this.value, '${esc(match.id)}')">
+              ${ouTotList.map(r => `
+                <option value="${r.line}" ${r.line === selTotRow.line ? "selected" : ""}>
+                  Soglia ${r.line} Gol (Over @${r.oddOver.toFixed(2)} · Under @${r.oddUnder.toFixed(2)})
+                </option>
+              `).join("")}
+            </select>
           </div>
           <div class="odds-grid two-cols">
-            ${oddButtonHtml(match, `OU_MATCH_OVER_${selTotRow.line}`, `Over ${selTotRow.line} Gol Match`, `Almeno ${Math.ceil(selTotRow.line)} gol totali`, selTotRow.oddOver)}
-            ${oddButtonHtml(match, `OU_MATCH_UNDER_${selTotRow.line}`, `Under ${selTotRow.line} Gol Match`, `Massimo ${Math.floor(selTotRow.line)} gol totali`, selTotRow.oddUnder)}
+            ${oddButtonHtml(match, `OU_MATCH_OVER_${selTotRow.line}`, `Over ${selTotRow.line}`, `Almeno ${Math.ceil(selTotRow.line)} gol`, selTotRow.oddOver)}
+            ${oddButtonHtml(match, `OU_MATCH_UNDER_${selTotRow.line}`, `Under ${selTotRow.line}`, `Massimo ${Math.floor(selTotRow.line)} gol`, selTotRow.oddUnder)}
           </div>
         </div>
 
         <!-- B) Squadra Casa -->
-        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;margin-bottom:12px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
-            <strong style="font-size:0.86rem;color:#34d399;">🏠 Gol Squadra Casa: ${esc(homeName)}</strong>
-            <div style="display:flex;align-items:center;gap:8px;">
-              <label for="selOuHome" style="font-size:0.76rem;color:var(--text-muted);">Scegli Soglia (${ouHomeList.length} opzioni):</label>
-              <select id="selOuHome" style="width:auto;padding:6px 10px;font-weight:800;"
-                onchange="updateCustomMarketSelection('ouHomeLine', this.value, '${esc(match.id)}')">
-                ${ouHomeList.map(r => `
-                  <option value="${r.line}" ${r.line === selHomeRow.line ? "selected" : ""}>
-                    Linea ${r.line} gol (Over @${r.oddOver.toFixed(2)} / Under @${r.oddUnder.toFixed(2)})
-                  </option>
-                `).join("")}
-              </select>
-            </div>
+        <div class="sub-market-card">
+          <div class="selector-row">
+            <label for="selOuHome" class="selector-title" style="color:#34d399;">
+              🏠 Gol Squadra Casa: ${esc(homeName)}
+            </label>
+            <select id="selOuHome" class="market-select"
+              onchange="updateCustomMarketSelection('ouHomeLine', this.value, '${esc(match.id)}')">
+              ${ouHomeList.map(r => `
+                <option value="${r.line}" ${r.line === selHomeRow.line ? "selected" : ""}>
+                  Soglia ${r.line} Gol (Over @${r.oddOver.toFixed(2)} · Under @${r.oddUnder.toFixed(2)})
+                </option>
+              `).join("")}
+            </select>
           </div>
           <div class="odds-grid two-cols">
-            ${oddButtonHtml(match, `OU_HOME_OVER_${selHomeRow.line}`, `Casa Over ${selHomeRow.line} (${homeName})`, `Almeno ${Math.ceil(selHomeRow.line)} gol`, selHomeRow.oddOver)}
-            ${oddButtonHtml(match, `OU_HOME_UNDER_${selHomeRow.line}`, `Casa Under ${selHomeRow.line} (${homeName})`, `Massimo ${Math.floor(selHomeRow.line)} gol`, selHomeRow.oddUnder)}
+            ${oddButtonHtml(match, `OU_HOME_OVER_${selHomeRow.line}`, `Casa Over ${selHomeRow.line}`, `Almeno ${Math.ceil(selHomeRow.line)} gol`, selHomeRow.oddOver)}
+            ${oddButtonHtml(match, `OU_HOME_UNDER_${selHomeRow.line}`, `Casa Under ${selHomeRow.line}`, `Massimo ${Math.floor(selHomeRow.line)} gol`, selHomeRow.oddUnder)}
           </div>
         </div>
 
         <!-- C) Squadra Trasferta -->
-        <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
-            <strong style="font-size:0.86rem;color:var(--oppidum-sky);">✈️ Gol Squadra Trasferta: ${esc(awayName)}</strong>
-            <div style="display:flex;align-items:center;gap:8px;">
-              <label for="selOuAway" style="font-size:0.76rem;color:var(--text-muted);">Scegli Soglia (${ouAwayList.length} opzioni):</label>
-              <select id="selOuAway" style="width:auto;padding:6px 10px;font-weight:800;"
-                onchange="updateCustomMarketSelection('ouAwayLine', this.value, '${esc(match.id)}')">
-                ${ouAwayList.map(r => `
-                  <option value="${r.line}" ${r.line === selAwayRow.line ? "selected" : ""}>
-                    Linea ${r.line} gol (Over @${r.oddOver.toFixed(2)} / Under @${r.oddUnder.toFixed(2)})
-                  </option>
-                `).join("")}
-              </select>
-            </div>
+        <div class="sub-market-card" style="margin-bottom:0;">
+          <div class="selector-row">
+            <label for="selOuAway" class="selector-title" style="color:var(--oppidum-sky);">
+              ✈️ Gol Squadra Trasferta: ${esc(awayName)}
+            </label>
+            <select id="selOuAway" class="market-select"
+              onchange="updateCustomMarketSelection('ouAwayLine', this.value, '${esc(match.id)}')">
+              ${ouAwayList.map(r => `
+                <option value="${r.line}" ${r.line === selAwayRow.line ? "selected" : ""}>
+                  Soglia ${r.line} Gol (Over @${r.oddOver.toFixed(2)} · Under @${r.oddUnder.toFixed(2)})
+                </option>
+              `).join("")}
+            </select>
           </div>
           <div class="odds-grid two-cols">
-            ${oddButtonHtml(match, `OU_AWAY_OVER_${selAwayRow.line}`, `Trasferta Over ${selAwayRow.line} (${awayName})`, `Almeno ${Math.ceil(selAwayRow.line)} gol`, selAwayRow.oddOver)}
-            ${oddButtonHtml(match, `OU_AWAY_UNDER_${selAwayRow.line}`, `Trasferta Under ${selAwayRow.line} (${awayName})`, `Massimo ${Math.floor(selAwayRow.line)} gol`, selAwayRow.oddUnder)}
+            ${oddButtonHtml(match, `OU_AWAY_OVER_${selAwayRow.line}`, `Trasf. Over ${selAwayRow.line}`, `Almeno ${Math.ceil(selAwayRow.line)} gol`, selAwayRow.oddOver)}
+            ${oddButtonHtml(match, `OU_AWAY_UNDER_${selAwayRow.line}`, `Trasf. Under ${selAwayRow.line}`, `Massimo ${Math.floor(selAwayRow.line)} gol`, selAwayRow.oddUnder)}
           </div>
         </div>
       </div>
@@ -1150,20 +1147,19 @@ function renderMarketsForMatch(match) {
       <!-- 2. NUMERO ESATTO DI GOL SQUADRA / MATCH (SCELTO DALL'UTENTE, MINIMO 1, MAI ZERO) -->
       <div class="market-block">
         <div class="market-block-header">
-          <div class="market-block-title">🎯 Numero Esatto di Gol — Match &amp; Squadre (Minimo 1 · No 0)</div>
-          <span class="market-badge">Inserisci il numero esatto di gol</span>
+          <div class="market-block-title">🎯 Numero Esatto di Gol — Match &amp; Squadre</div>
+          <span class="market-badge">Minimo 1 Gol · No 0</span>
         </div>
 
         <div class="odds-grid scorers-grid">
           <div class="scorer-market-row">
             <div class="scorer-info">
-              <span class="scorer-name">🤽 Gol Esatti Tutto il Match</span>
+              <span class="scorer-name">🤽 Gol Esatti Match</span>
               <span class="scorer-stat-pill">Attesi ~${Math.round(lamTot)}</span>
             </div>
-            <div style="display:flex;align-items:center;gap:8px;margin:4px 0;">
-              <label style="font-size:0.75rem;color:var(--text-muted);white-space:nowrap;">Numero Gol (min 1):</label>
-              <input type="number" min="1" max="45" value="${cs.exactMatchGoals}"
-                style="padding:6px 10px;font-weight:800;text-align:center;"
+            <div class="exact-input-row">
+              <label>Scegli Gol (min 1):</label>
+              <input type="number" min="1" max="45" value="${cs.exactMatchGoals}" class="exact-num-input"
                 onchange="updateCustomMarketSelection('exactMatchGoals', this.value, '${esc(match.id)}')" />
             </div>
             ${oddButtonHtml(match, `EXACT_GOALS_MATCH_${cs.exactMatchGoals}`, `Match: Esattamente ${cs.exactMatchGoals} Gol`, "Somma esatta gol a fine gara", oddExactMatch)}
@@ -1174,27 +1170,25 @@ function renderMarketsForMatch(match) {
               <span class="scorer-name">🏠 Gol Esatti ${esc(homeName)}</span>
               <span class="scorer-stat-pill">Casa (~${Math.round(lamHome)})</span>
             </div>
-            <div style="display:flex;align-items:center;gap:8px;margin:4px 0;">
-              <label style="font-size:0.75rem;color:var(--text-muted);white-space:nowrap;">Numero Gol (min 1):</label>
-              <input type="number" min="1" max="30" value="${cs.exactHomeGoals}"
-                style="padding:6px 10px;font-weight:800;text-align:center;"
+            <div class="exact-input-row">
+              <label>Scegli Gol (min 1):</label>
+              <input type="number" min="1" max="30" value="${cs.exactHomeGoals}" class="exact-num-input"
                 onchange="updateCustomMarketSelection('exactHomeGoals', this.value, '${esc(match.id)}')" />
             </div>
-            ${oddButtonHtml(match, `EXACT_GOALS_HOME_${cs.exactHomeGoals}`, `${homeName}: Esattamente ${cs.exactHomeGoals} Gol`, "Numero esatto gol squadra Casa", oddExactHome)}
+            ${oddButtonHtml(match, `EXACT_GOALS_HOME_${cs.exactHomeGoals}`, `${homeName}: Esattamente ${cs.exactHomeGoals} Gol`, "Numero esatto gol Casa", oddExactHome)}
           </div>
 
           <div class="scorer-market-row">
             <div class="scorer-info">
               <span class="scorer-name">✈️ Gol Esatti ${esc(awayName)}</span>
-              <span class="scorer-stat-pill">Trasferta (~${Math.round(lamAway)})</span>
+              <span class="scorer-stat-pill">Trasf. (~${Math.round(lamAway)})</span>
             </div>
-            <div style="display:flex;align-items:center;gap:8px;margin:4px 0;">
-              <label style="font-size:0.75rem;color:var(--text-muted);white-space:nowrap;">Numero Gol (min 1):</label>
-              <input type="number" min="1" max="30" value="${cs.exactAwayGoals}"
-                style="padding:6px 10px;font-weight:800;text-align:center;"
+            <div class="exact-input-row">
+              <label>Scegli Gol (min 1):</label>
+              <input type="number" min="1" max="30" value="${cs.exactAwayGoals}" class="exact-num-input"
                 onchange="updateCustomMarketSelection('exactAwayGoals', this.value, '${esc(match.id)}')" />
             </div>
-            ${oddButtonHtml(match, `EXACT_GOALS_AWAY_${cs.exactAwayGoals}`, `${awayName}: Esattamente ${cs.exactAwayGoals} Gol`, "Numero esatto gol squadra Trasferta", oddExactAway)}
+            ${oddButtonHtml(match, `EXACT_GOALS_AWAY_${cs.exactAwayGoals}`, `${awayName}: Esattamente ${cs.exactAwayGoals} Gol`, "Numero esatto gol Trasferta", oddExactAway)}
           </div>
         </div>
       </div>
@@ -1202,20 +1196,20 @@ function renderMarketsForMatch(match) {
       <!-- 3. HANDICAP GOL — SOLO NEGATIVI (-1.5 .. -10.5) SIA PER CASA CHE PER TRASFERTA -->
       <div class="market-block">
         <div class="market-block-header">
-          <div class="market-block-title">⚖️ Handicap Gol (Solo Handicap Negativi · Vittoria con Scarto)</div>
+          <div class="market-block-title">⚖️ Handicap Gol (Solo Handicap Negativi)</div>
           <span class="market-badge">Da -1.5 a -10.5 gol</span>
         </div>
 
-        <div class="odds-grid two-cols">
+        <div class="odds-grid scorers-grid">
           <!-- Handicap Negativo Squadra Casa -->
-          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;">
-            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:10px;">
-              <strong style="font-size:0.84rem;color:var(--gold);">🏠 Handicap ${esc(homeName)} (Casa)</strong>
-              <select style="width:auto;padding:5px 8px;font-weight:800;"
+          <div class="sub-market-card" style="margin-bottom:0;">
+            <div class="selector-row">
+              <label class="selector-title" style="color:var(--gold);">🏠 Handicap ${esc(homeName)} (Casa)</label>
+              <select class="market-select"
                 onchange="updateCustomMarketSelection('hcpHomeNegLine', this.value, '${esc(match.id)}')">
                 ${hcpNegList.map(r => `
                   <option value="${r.negLine}" ${r.negLine === selHcpHome.negLine ? "selected" : ""}>
-                    ${r.negLineStr} (Vince di ${r.minGoalsDiff}+ gol) → @${r.oddHomeNeg.toFixed(2)}
+                    Handicap ${r.negLineStr} (Vince di ${r.minGoalsDiff}+ gol) → @${r.oddHomeNeg.toFixed(2)}
                   </option>
                 `).join("")}
               </select>
@@ -1224,14 +1218,14 @@ function renderMarketsForMatch(match) {
           </div>
 
           <!-- Handicap Negativo Squadra Trasferta -->
-          <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;">
-            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:10px;">
-              <strong style="font-size:0.84rem;color:var(--oppidum-sky);">✈️ Handicap ${esc(awayName)} (Trasferta)</strong>
-              <select style="width:auto;padding:5px 8px;font-weight:800;"
+          <div class="sub-market-card" style="margin-bottom:0;">
+            <div class="selector-row">
+              <label class="selector-title" style="color:var(--oppidum-sky);">✈️ Handicap ${esc(awayName)} (Trasferta)</label>
+              <select class="market-select"
                 onchange="updateCustomMarketSelection('hcpAwayNegLine', this.value, '${esc(match.id)}')">
                 ${hcpNegList.map(r => `
                   <option value="${r.negLine}" ${r.negLine === selHcpAway.negLine ? "selected" : ""}>
-                    ${r.negLineStr} (Vince di ${r.minGoalsDiff}+ gol) → @${r.oddAwayNeg.toFixed(2)}
+                    Handicap ${r.negLineStr} (Vince di ${r.minGoalsDiff}+ gol) → @${r.oddAwayNeg.toFixed(2)}
                   </option>
                 `).join("")}
               </select>
@@ -1247,8 +1241,8 @@ function renderMarketsForMatch(match) {
     html += `
       <div class="market-block">
         <div class="market-block-header">
-          <div class="market-block-title">🎯 Quote Marcatori Oppidum (1+ / 2+ / 3+ Gol &amp; Gol Esatti Giocatore)</div>
-          <span class="market-badge">Scegli anche il numero esatto di gol di ogni giocatore</span>
+          <div class="market-block-title">🎯 Quote Marcatori Oppidum (1+ / 2+ / 3+ &amp; Gol Esatti)</div>
+          <span class="market-badge">Scegli anche il numero esatto di gol</span>
         </div>
         <div class="odds-grid scorers-grid">
           ${an.scorerMarkets.map(sc => {
@@ -1258,7 +1252,6 @@ function renderMarketsForMatch(match) {
             const matchTitle = match.isHome ? `Oppidum vs ${match.opponent}` : `${match.opponent} vs Oppidum`;
             const disAttr = closed ? "disabled style='opacity:0.45;cursor:not-allowed;'" : "";
 
-            // Numero esatto di gol scelto per questo giocatore (default: 1 gol, min 1)
             const chosenExact = Math.max(1, parseInt(cs.playerExactGoals[sc.playerId], 10) || 1);
             const oddExactPlayer = computeExactGoalsOdd(sc.expectedGoals || 0.45, chosenExact);
             const selExactP = isPickSelected(match.id, `SC_EXACT_${sc.playerId}_${chosenExact}`) ? "selected" : "";
@@ -1290,13 +1283,12 @@ function renderMarketsForMatch(match) {
 
                 <!-- GOL ESATTI DEL GIOCATORE IN PARTITA -->
                 <div style="border-top:1px dashed var(--border);padding-top:6px;margin-top:4px;">
-                  <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;margin-bottom:6px;">
-                    <span style="font-size:0.7rem;color:var(--gold);font-weight:700;">🎯 Gol Esatti in Partita (min 1):</span>
-                    <input type="number" min="1" max="15" value="${chosenExact}"
-                      style="width:58px;padding:4px 6px;font-weight:800;text-align:center;font-size:0.82rem;"
+                  <div class="exact-input-row" style="margin-bottom:6px;">
+                    <label style="color:var(--gold);font-weight:700;">🎯 Gol Esatti (min 1):</label>
+                    <input type="number" min="1" max="15" value="${chosenExact}" class="exact-num-input"
                       onchange="updateCustomMarketSelection('playerExactGoals', this.value, '${esc(match.id)}', '${esc(sc.playerId)}')" />
                   </div>
-                  <button type="button" class="odd-btn ${selExactP}" ${disAttr}
+                  <button type="button" class="odd-btn ${selExactP}" style="flex-direction:row;justify-content:space-between;padding:8px 10px;min-height:42px;" ${disAttr}
                     onclick="toggleBetPick('${esc(match.id)}', '${esc(matchTitle)}', 'SC_EXACT_${sc.playerId}_${chosenExact}', '${esc(sc.name)}: Esattamente ${chosenExact} Gol', ${oddExactPlayer})">
                     <span class="odd-label">Esattamente ${chosenExact} Gol</span>
                     <span class="odd-val">${oddExactPlayer.toFixed(2)}</span>
