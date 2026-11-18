@@ -6,11 +6,11 @@
    ============================================================ */
 
 const STORAGE_KEYS = {
-  USERS: "oppidum_season_users_v11",
-  CURRENT_USER: "oppidum_season_current_user_v11",
-  BETS: "oppidum_season_bets_v11",
-  MATCHES: "oppidum_season_matches_v11",
-  APPEARANCES_REF: "oppidum_season_hist_apps_v11"
+  USERS: "oppidum_season_users_v12",
+  CURRENT_USER: "oppidum_season_current_user_v12",
+  BETS: "oppidum_season_bets_v12",
+  MATCHES: "oppidum_season_matches_v12",
+  APPEARANCES_REF: "oppidum_season_hist_apps_v12"
 };
 
 const CLOUD_SYNC_URL = "https://api.restful-api.dev/objects/ff808181a09d98f701a1ef0b06e131f8";
@@ -456,7 +456,7 @@ function generateAiOddsForMatch(opponentName, isHome = true, boostOppidum = 1.15
     };
   }).sort((a, b) => a.odd1Plus - b.odd1Plus);
 
-  // Calcolo Quote Espulsioni (Falli Personali: 1, 2 o 3 falli) basato sul ruolo
+  // Calcolo Quote Espulsioni (Falli Personali: Esatti "Solo 1", "Solo 2", "3 Falli" + Soglie "0", "1+", "2+")
   const rivalIntensity = Math.min(1.18, Math.max(0.90, lambdaOpponent / 11.0));
   const exclusionMarkets = activeFieldPlayers.map(p => {
     let baseFoulLambda = 0.88; // Giocatori di Fascia
@@ -464,17 +464,23 @@ function generateAiOddsForMatch(opponentName, isHome = true, boostOppidum = 1.15
     else if (p.role === "Centroboa") baseFoulLambda = 1.22; // Lotta ai 2 metri
 
     const foulLambda = baseFoulLambda * rivalIntensity;
-    const pFoul1 = 1 - Math.exp(-foulLambda);
-    const pFoul2 = 1 - (poissonPmf(0, foulLambda) + poissonPmf(1, foulLambda));
-    const pFoul3 = 1 - (poissonPmf(0, foulLambda) + poissonPmf(1, foulLambda) + poissonPmf(2, foulLambda));
+    const pExact0 = poissonPmf(0, foulLambda);
+    const pExact1 = poissonPmf(1, foulLambda);
+    const pExact2 = poissonPmf(2, foulLambda);
+    const pFoul1Plus = 1 - pExact0;
+    const pFoul2Plus = 1 - (pExact0 + pExact1);
+    const pFoul3 = 1 - (pExact0 + pExact1 + pExact2);
 
     return {
       playerId: p.id,
       name: p.name,
       role: p.role,
       leadership: p.leadership || "",
-      oddFoul1: probToOdd(pFoul1, 1.06, 1.18, 3.50),
-      oddFoul2: probToOdd(pFoul2, 1.06, 1.75, 6.50),
+      oddExact0: probToOdd(pExact0, 1.06, 1.35, 6.50),
+      oddExact1: probToOdd(pExact1, 1.06, 2.10, 4.20),
+      oddExact2: probToOdd(pExact2, 1.06, 2.85, 6.80),
+      oddFoul1: probToOdd(pFoul1Plus, 1.06, 1.18, 3.50),
+      oddFoul2: probToOdd(pFoul2Plus, 1.06, 1.75, 6.50),
       oddFoul3: probToOdd(pFoul3, 1.05, 2.90, 14.00)
     };
   }).sort((a, b) => a.oddFoul3 - b.oddFoul3);
@@ -969,37 +975,62 @@ function renderMarketsForMatch(match) {
     html += `
       <div class="market-block">
         <div class="market-block-header">
-          <div class="market-block-title">🟥 Espulsioni — Falli Personali (1, 2 o 3 Falli)</div>
-          <span class="market-badge">1+ Fallo · 2+ Falli · 3 Falli (Definitiva)</span>
+          <div class="market-block-title">🟥 Espulsioni — Falli Personali (Esatti o Almeno)</div>
+          <span class="market-badge">Solo 1 · Solo 2 · 3 Falli (Out) · 0 / 1+ / 2+</span>
         </div>
         <div class="odds-grid scorers-grid">
           ${exList.map(ex => {
-            const sel1 = isPickSelected(match.id, `EX_${ex.playerId}_1`) ? "selected" : "";
-            const sel2 = isPickSelected(match.id, `EX_${ex.playerId}_2`) ? "selected" : "";
-            const sel3 = isPickSelected(match.id, `EX_${ex.playerId}_3`) ? "selected" : "";
+            const selEx1 = isPickSelected(match.id, `EX_EXACT_${ex.playerId}_1`) ? "selected" : "";
+            const selEx2 = isPickSelected(match.id, `EX_EXACT_${ex.playerId}_2`) ? "selected" : "";
+            const selEx3 = isPickSelected(match.id, `EX_${ex.playerId}_3`) ? "selected" : "";
+            const selEx0 = isPickSelected(match.id, `EX_EXACT_${ex.playerId}_0`) ? "selected" : "";
+            const sel1Plus = isPickSelected(match.id, `EX_${ex.playerId}_1`) ? "selected" : "";
+            const sel2Plus = isPickSelected(match.id, `EX_${ex.playerId}_2`) ? "selected" : "";
             const matchTitle = match.isHome ? `Oppidum vs ${match.opponent}` : `${match.opponent} vs Oppidum`;
             const disAttr = closed ? "disabled style='opacity:0.45;cursor:not-allowed;'" : "";
+            const oddEx1 = ex.oddExact1 || 2.50;
+            const oddEx2 = ex.oddExact2 || 3.40;
+            const oddEx0 = ex.oddExact0 || 2.20;
             return `
               <div class="scorer-market-row">
                 <div class="scorer-info">
                   <span class="scorer-name">🟥 ${esc(ex.name)}</span>
                   <span class="scorer-stat-pill">${esc(ex.role)}</span>
                 </div>
+                <div style="font-size:0.68rem;color:var(--gold);font-weight:700;margin-top:2px;">Numero Esatto di Falli:</div>
                 <div class="scorer-odds-mini">
-                  <button type="button" class="odd-btn ${sel1}" ${disAttr}
-                    onclick="toggleBetPick('${esc(match.id)}', '${esc(matchTitle)}', 'EX_${ex.playerId}_1', '${esc(ex.name)}: 1+ Fallo Personale', ${ex.oddFoul1})">
-                    <span class="odd-label">1+ Fallo</span>
-                    <span class="odd-val">${ex.oddFoul1.toFixed(2)}</span>
+                  <button type="button" class="odd-btn ${selEx1}" ${disAttr}
+                    onclick="toggleBetPick('${esc(match.id)}', '${esc(matchTitle)}', 'EX_EXACT_${ex.playerId}_1', '${esc(ex.name)}: Solo 1 Fallo (Esatto)', ${oddEx1})">
+                    <span class="odd-label">Solo 1</span>
+                    <span class="odd-val">${oddEx1.toFixed(2)}</span>
                   </button>
-                  <button type="button" class="odd-btn ${sel2}" ${disAttr}
-                    onclick="toggleBetPick('${esc(match.id)}', '${esc(matchTitle)}', 'EX_${ex.playerId}_2', '${esc(ex.name)}: 2+ Falli Personali', ${ex.oddFoul2})">
-                    <span class="odd-label">2+ Falli</span>
-                    <span class="odd-val">${ex.oddFoul2.toFixed(2)}</span>
+                  <button type="button" class="odd-btn ${selEx2}" ${disAttr}
+                    onclick="toggleBetPick('${esc(match.id)}', '${esc(matchTitle)}', 'EX_EXACT_${ex.playerId}_2', '${esc(ex.name)}: Solo 2 Falli (Esatto)', ${oddEx2})">
+                    <span class="odd-label">Solo 2</span>
+                    <span class="odd-val">${oddEx2.toFixed(2)}</span>
                   </button>
-                  <button type="button" class="odd-btn ${sel3}" ${disAttr}
+                  <button type="button" class="odd-btn ${selEx3}" ${disAttr}
                     onclick="toggleBetPick('${esc(match.id)}', '${esc(matchTitle)}', 'EX_${ex.playerId}_3', '${esc(ex.name)}: 3 Falli (Definitiva)', ${ex.oddFoul3})">
                     <span class="odd-label">3 Falli (Out)</span>
                     <span class="odd-val">${ex.oddFoul3.toFixed(2)}</span>
+                  </button>
+                </div>
+                <div style="font-size:0.68rem;color:var(--text-muted);font-weight:700;margin-top:2px;">Soglie Falli (0 / Almeno):</div>
+                <div class="scorer-odds-mini">
+                  <button type="button" class="odd-btn ${selEx0}" ${disAttr}
+                    onclick="toggleBetPick('${esc(match.id)}', '${esc(matchTitle)}', 'EX_EXACT_${ex.playerId}_0', '${esc(ex.name)}: 0 Falli (Netto)', ${oddEx0})">
+                    <span class="odd-label">0 Falli</span>
+                    <span class="odd-val">${oddEx0.toFixed(2)}</span>
+                  </button>
+                  <button type="button" class="odd-btn ${sel1Plus}" ${disAttr}
+                    onclick="toggleBetPick('${esc(match.id)}', '${esc(matchTitle)}', 'EX_${ex.playerId}_1', '${esc(ex.name)}: Almeno 1 Fallo (1+)', ${ex.oddFoul1})">
+                    <span class="odd-label">1+ Fallo</span>
+                    <span class="odd-val">${ex.oddFoul1.toFixed(2)}</span>
+                  </button>
+                  <button type="button" class="odd-btn ${sel2Plus}" ${disAttr}
+                    onclick="toggleBetPick('${esc(match.id)}', '${esc(matchTitle)}', 'EX_${ex.playerId}_2', '${esc(ex.name)}: Almeno 2 Falli (2+)', ${ex.oddFoul2})">
+                    <span class="odd-label">2+ Falli</span>
+                    <span class="odd-val">${ex.oddFoul2.toFixed(2)}</span>
                   </button>
                 </div>
               </div>
