@@ -1,5 +1,6 @@
 /* ============================================================
-   OPPIDUM BET — Nuova Stagione Serie C | Oppidum Sport Cagliari
+   OPPIDUM BET — Nuova Stagione Serie C (Girone 6 - C.R. Sardegna)
+   - Girone 6 Ufficiale (10 squadre, calendario in uscita)
    - Dati scorsa stagione mantenuti SOLO nel motore AI interno
    - Login semplice con partenza a 100 Crediti per tutti
    - Rosa Nuova Stagione (con Atzeni, Faret, Pittotti e Olla;
@@ -8,36 +9,47 @@
    ============================================================ */
 
 const STORAGE_KEYS = {
-  USERS: "oppidum_newseason_users_v3",
-  CURRENT_USER: "oppidum_newseason_current_user_v3",
-  BETS: "oppidum_newseason_bets_v3",
-  MATCHES: "oppidum_newseason_matches_v3",
-  APPEARANCES_REF: "oppidum_hist_appearances_v3"
+  USERS: "oppidum_girone6_users_v1",
+  CURRENT_USER: "oppidum_girone6_current_user_v1",
+  BETS: "oppidum_girone6_bets_v1",
+  MATCHES: "oppidum_girone6_matches_v1",
+  APPEARANCES_REF: "oppidum_girone6_hist_apps_v1"
 };
 
 const STARTING_CREDITS = 100;
 
 // ============================================================
-// 1. ARCHIVIO STORICO INTERNO (NON MOSTRATO NEL SITO)
-//    Usato esclusivamente dall'AI per stimare la forza delle
-//    squadre avversarie e il fiuto del gol dei giocatori.
+// 1. GIRONE 6 UFFICIALE (C.R. SARDEGNA) & RIFERIMENTO AI INTERNO
 // ============================================================
+const GIRONE_6_TEAMS = [
+  "ANACONDA PALLANUOTO",
+  "ANTARES N e PN LATINA",
+  "AQUADEMIA",
+  "BABEL",
+  "CENTUMCELLAE PALLANUOTO",
+  "LAZIO PALLANUOTO",
+  "OPPIDUM SPORT CAGLIARI",
+  "R.N. CAGLIARI",
+  "VILLA AURELIA S.C.",
+  "ZERO9 TEAM"
+];
+
 const HISTORICAL_AI_REFERENCE = {
-  // Statistiche sintetiche Serie C Girone 5 scorsa stagione (18 gare)
+  // Parametri di forza stimati dall'AI (combinando i dati reali della scorsa
+  // stagione per chi c'era già + rating Serie C per le nuove del Girone 6)
   teamsStrength: {
-    "Bellator Frusino":    { gf: 277, ga: 185, pts: 49 },
-    "De Virtute Roma":     { gf: 263, ga: 192, pts: 45 },
-    "RN Cagliari":         { gf: 214, ga: 162, pts: 35 },
-    "Castelli Romani":     { gf: 217, ga: 207, pts: 27 },
-    "Aqvaroma":            { gf: 207, ga: 196, pts: 26 },
-    "RN Roma Vis Nova":    { gf: 219, ga: 227, pts: 24 },
-    "Anaconda PN":         { gf: 204, ga: 210, pts: 22 },
-    "Imperium":            { gf: 179, ga: 220, pts: 19 },
-    "Oppidum S. Cagliari": { gf: 149, ga: 247, pts: 4  },
-    "Promogest Quartu SE": { gf: 172, ga: 285, pts: 3  }
+    "R.N. CAGLIARI":           { gf: 214, ga: 162, note: "Derby Cagliaritano · Precedenti 2026: 6-13 e 8-11" },
+    "ANACONDA PALLANUOTO":     { gf: 204, ga: 210, note: "Precedenti 2026: 9-11 in casa e 13-13 in trasferta!" },
+    "LAZIO PALLANUOTO":        { gf: 225, ga: 185, note: "Tradizione storica laziale · Trasferta ostica a Roma" },
+    "CENTUMCELLAE PALLANUOTO": { gf: 218, ga: 190, note: "Scuola Civitavecchia · Squadra fisica e veloce" },
+    "ZERO9 TEAM":              { gf: 210, ga: 195, note: "Club romano molto organizzato sui ritmi alti" },
+    "VILLA AURELIA S.C.":      { gf: 202, ga: 198, note: "Sfida equilibrata contro i romani del Villa Aurelia" },
+    "ANTARES N e PN LATINA":   { gf: 198, ga: 205, note: "Trasferta pontina a Latina · Match combattuto" },
+    "BABEL":                   { gf: 195, ga: 208, note: "Sfida aperta contro il Babel Roma" },
+    "AQUADEMIA":               { gf: 190, ga: 212, note: "Compagine laziale alla portata della banda di Terramaini" },
+    "OPPIDUM SPORT CAGLIARI":  { gf: 149, ga: 247, note: "La nostra squadra · Piscina Terramaini Cagliari" }
   },
-  // Rosa attuale Nuova Stagione (19 giocatori: 2 portieri + 17 movimento)
-  // Fortini e Frau sono stati rimossi. Pittotti (1 presenza storica, 0 gol) e Olla (nuovo) inclusi.
+  // Rosa Ufficiale Nuova Stagione (19 giocatori: 2 portieri + 17 movimento)
   roster: [
     { id: "atzeni",     name: "ATZENI",     role: "Portiere",    isGk: true,  histGoals: 0,  histApps: 18, note: "Portiere" },
     { id: "faret",      name: "FARET",      role: "Portiere",    isGk: true,  histGoals: 0,  histApps: 18, note: "Portiere" },
@@ -65,8 +77,7 @@ const HISTORICAL_AI_REFERENCE = {
 let appState = {
   selectedMatchId: null,
   activeMarketCategory: "all", // all | main | scorers | gk | goliardic
-  betSlip: [],
-  editingMatchId: null
+  betSlip: []
 };
 
 // ---------- UTILITY ----------
@@ -264,10 +275,6 @@ function getHistoricalAppearancesMap() {
   return map;
 }
 
-function saveHistoricalAppearancesMap(map) {
-  localStorage.setItem(STORAGE_KEYS.APPEARANCES_REF, JSON.stringify(map));
-}
-
 // Statistiche della NUOVA STAGIONE calcolate dalle partite giocate/refertate
 function computeNewSeasonPlayerStats() {
   const matches = getSeasonMatches();
@@ -277,19 +284,13 @@ function computeNewSeasonPlayerStats() {
   return HISTORICAL_AI_REFERENCE.roster.map(p => {
     let newSeasonApps = 0;
     let newSeasonGoals = 0;
-    const matchLog = [];
 
     playedMatches.forEach(m => {
       const presentIds = m.presentPlayerIds || [];
       const goalsMap = m.playerGoals || {};
-      const wasPresent = presentIds.includes(p.id);
-      if (wasPresent) {
+      if (presentIds.includes(p.id)) {
         newSeasonApps++;
-        const g = Number(goalsMap[p.id] || 0);
-        newSeasonGoals += g;
-        matchLog.push({ matchId: m.id, opponent: m.opponent, date: m.date, goals: g, present: true });
-      } else {
-        matchLog.push({ matchId: m.id, opponent: m.opponent, date: m.date, goals: 0, present: false });
+        newSeasonGoals += Number(goalsMap[p.id] || 0);
       }
     });
 
@@ -297,8 +298,7 @@ function computeNewSeasonPlayerStats() {
       ...p,
       histApps: histApps[p.id] ?? p.histApps,
       newSeasonApps,
-      newSeasonGoals,
-      matchLog
+      newSeasonGoals
     };
   });
 }
@@ -306,19 +306,18 @@ function computeNewSeasonPlayerStats() {
 function generateAiOddsForMatch(opponentName, isHome = true, boostOppidum = 1.15, presentPlayerIds = null) {
   const refTeams = HISTORICAL_AI_REFERENCE.teamsStrength;
   const oppRef = refTeams[opponentName];
-  const avgLeagueGoals = 12.0;
+  const avgLeagueGoals = 11.8;
 
-  let lambdaOppidum = 9.5;
-  let lambdaOpponent = 11.5;
+  let lambdaOppidum = 9.6;
+  let lambdaOpponent = 11.2;
 
   if (oppRef) {
     const rivalAtk = (oppRef.gf / 18) / avgLeagueGoals;
     const rivalDef = (oppRef.ga / 18) / avgLeagueGoals;
-    // Per la nuova stagione consideriamo una crescita dell'Oppidum rispetto all'anno scorso
-    lambdaOppidum = (9.2 * rivalDef) * (isHome ? 1.10 : 0.95) * boostOppidum;
-    lambdaOpponent = (11.8 * rivalAtk * 0.92) * (isHome ? 0.92 : 1.06);
+    lambdaOppidum = (9.4 * rivalDef) * (isHome ? 1.10 : 0.94) * boostOppidum;
+    lambdaOpponent = (11.2 * rivalAtk * 0.94) * (isHome ? 0.92 : 1.07);
   } else {
-    lambdaOppidum = (isHome ? 10.5 : 9.2) * boostOppidum;
+    lambdaOppidum = (isHome ? 10.4 : 9.2) * boostOppidum;
     lambdaOpponent = isHome ? 9.8 : 11.0;
   }
 
@@ -352,18 +351,15 @@ function generateAiOddsForMatch(opponentName, isHome = true, boostOppidum = 1.15
   const opponentLine = Math.round(lambdaOpponent) - 0.5;
   const handicapLine = Number((Math.round((lambdaOpponent - lambdaOppidum) * 2) / 2 + 0.5).toFixed(1));
 
-  // Calcolo quote Marcatori sui giocatori di movimento CONVOCATI / PRESENTI
   const playerStats = computeNewSeasonPlayerStats();
   const activeFieldPlayers = playerStats.filter(p =>
     !p.isGk && (!presentPlayerIds || presentPlayerIds.includes(p.id))
   );
 
-  // Calcolo media gol per presenza (combinando storico + nuova stagione)
   const playerWeights = activeFieldPlayers.map(p => {
     const totGoals = p.histGoals + (p.newSeasonGoals * 1.5);
     const totApps = Math.max(1, p.histApps + p.newSeasonApps);
     const goalsPerApp = totGoals / totApps;
-    // Se un giocatore ha 0 gol (es. Pittotti, Olla, Morzetti, Murtas, Orrù), diamo una probabilità base realistica
     const baseRate = goalsPerApp > 0 ? goalsPerApp : (p.id === "olla" ? 0.35 : 0.16);
     return { player: p, weight: baseRate };
   });
@@ -404,7 +400,7 @@ function generateAiOddsForMatch(opponentName, isHome = true, boostOppidum = 1.15
     { id: "gol_pittotti_gol", label: "💥 PITTOTTI sblocca il tabellino e segna!", sub: "Primo gol ufficiale con birra pagata", odd: 4.20 },
     { id: "gol_cannas_urlo",  label: "📢 Mister Chicco Cannas perde la voce entro il 2° tempo", sub: "Classico di Terramaini", odd: 1.45 },
     { id: "gol_melis_lob",    label: "🤽 MELIS segna con palombella ignorante", sub: "Tocco morbido sotto l'incrocio", odd: 2.30 },
-    { id: "gol_proteste",     label: "🟥 Almeno un'espulsione per proteste in partita", sub: "Tensione agonistica da Serie C", odd: 1.75 },
+    { id: "gol_proteste",     label: "🟥 Almeno un'espulsione per proteste in partita", sub: "Tensione agonistica da Girone 6", odd: 1.75 },
     { id: "gol_ichnusa",      label: "🍺 Cassa di Ichnusa portata nello spogliatoio a fine gara", sub: "Vittoria morale garantita", odd: 1.35 }
   ];
 
@@ -414,6 +410,7 @@ function generateAiOddsForMatch(opponentName, isHome = true, boostOppidum = 1.15
     prob1: Math.round(p1 * 100),
     probX: Math.round(pX * 100),
     prob2: Math.round(p2 * 100),
+    rivalNote: oppRef?.note || "Sfida del Girone 6 — C.R. Sardegna",
     mainMarkets: {
       odd1: probToOdd(p1, 1.06),
       oddX: probToOdd(pX, 1.05),
@@ -437,7 +434,7 @@ function generateAiOddsForMatch(opponentName, isHome = true, boostOppidum = 1.15
 }
 
 // ============================================================
-// 4. PARTITE DELLA NUOVA STAGIONE (STORAGE & PRESENZE)
+// 4. SFIDE DEL GIRONE 6 (IN ATTESA DEL CALENDARIO UFFICIALE)
 // ============================================================
 function getAllRosterIds() {
   return HISTORICAL_AI_REFERENCE.roster.map(p => p.id);
@@ -452,50 +449,24 @@ function getSeasonMatches() {
     } catch (e) {}
   }
   const allIds = getAllRosterIds();
-  const initialMatches = [
-    {
-      id: "ns_match_1",
-      title: "1ª Giornata — Nuova Stagione",
-      date: "Prossimo Sabato · Ore 15:00",
-      opponent: "Promogest Quartu SE",
-      isHome: true,
-      boostOppidum: 1.18,
-      status: "open", // open | settled
-      scoreUs: null,
-      scoreThem: null,
-      presentPlayerIds: [...allIds],
-      playerGoals: {},
-      analysis: generateAiOddsForMatch("Promogest Quartu SE", true, 1.18, allIds)
-    },
-    {
-      id: "ns_match_2",
-      title: "2ª Giornata — Nuova Stagione",
-      date: "Prossimo Turno · Ore 16:30",
-      opponent: "RN Cagliari",
-      isHome: true,
-      boostOppidum: 1.15,
-      status: "open",
-      scoreUs: null,
-      scoreThem: null,
-      presentPlayerIds: [...allIds],
-      playerGoals: {},
-      analysis: generateAiOddsForMatch("RN Cagliari", true, 1.15, allIds)
-    },
-    {
-      id: "ns_match_3",
-      title: "3ª Giornata — Nuova Stagione",
-      date: "In Calendario · Ore 15:00",
-      opponent: "Anaconda PN",
-      isHome: false,
-      boostOppidum: 1.15,
-      status: "open",
-      scoreUs: null,
-      scoreThem: null,
-      presentPlayerIds: [...allIds],
-      playerGoals: {},
-      analysis: generateAiOddsForMatch("Anaconda PN", false, 1.15, allIds)
-    }
-  ];
+  const opponents = GIRONE_6_TEAMS.filter(t => t !== "OPPIDUM SPORT CAGLIARI");
+
+  // Pre-carichiamo le 9 avversarie ufficiali del Girone 6 (con data "In attesa di calendario")
+  const initialMatches = opponents.map((opp, idx) => ({
+    id: `g6_match_${idx + 1}`,
+    title: `Girone 6 — Sfida vs ${opp}`,
+    date: "Data da definire (Calendario in uscita)",
+    opponent: opp,
+    isHome: true,
+    boostOppidum: 1.15,
+    status: "open", // open | settled
+    scoreUs: null,
+    scoreThem: null,
+    presentPlayerIds: [...allIds],
+    playerGoals: {},
+    analysis: generateAiOddsForMatch(opp, true, 1.15, allIds)
+  }));
+
   localStorage.setItem(STORAGE_KEYS.MATCHES, JSON.stringify(initialMatches));
   return initialMatches;
 }
@@ -516,6 +487,41 @@ function saveBetSlips(slips) {
   localStorage.setItem(STORAGE_KEYS.BETS, JSON.stringify(slips));
 }
 
+// Calcola la classifica live del Girone 6 dalle partite refertate della nuova stagione
+function computeGirone6Table() {
+  const table = {};
+  GIRONE_6_TEAMS.forEach(name => {
+    table[name] = { name, played: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 };
+  });
+
+  const settled = getSeasonMatches().filter(m => m.status === "settled");
+  settled.forEach(m => {
+    const oppName = "OPPIDUM SPORT CAGLIARI";
+    const rivName = m.opponent;
+    if (!table[rivName]) {
+      table[rivName] = { name: rivName, played: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, pts: 0 };
+    }
+    const us = table[oppName];
+    const them = table[rivName];
+    const gUs = Number(m.scoreUs || 0);
+    const gThem = Number(m.scoreThem || 0);
+
+    us.played++; them.played++;
+    us.gf += gUs; us.ga += gThem;
+    them.gf += gThem; them.ga += gUs;
+
+    if (gUs > gThem) { us.w++; us.pts += 3; them.l++; }
+    else if (gUs < gThem) { them.w++; them.pts += 3; us.l++; }
+    else { us.d++; them.d++; us.pts += 1; them.pts += 1; }
+  });
+
+  return Object.values(table).sort((a, b) => {
+    if (b.pts !== a.pts) return b.pts - a.pts;
+    if ((b.gf - b.ga) !== (a.gf - a.ga)) return (b.gf - b.ga) - (a.gf - a.ga);
+    return a.name.localeCompare(b.name);
+  });
+}
+
 // ---------- NAVIGAZIONE TABS ----------
 function switchTab(tabId) {
   document.querySelectorAll(".tab-panel").forEach(el => {
@@ -534,7 +540,7 @@ function switchTab(tabId) {
 }
 
 // ============================================================
-// 5. RENDERING TAB 1: PALINSESTO & SCOMMESSE NUOVA STAGIONE
+// 5. RENDERING TAB 1: PALINSESTO & SCOMMESSE GIRONE 6
 // ============================================================
 function renderBettingTab() {
   const allMatches = getSeasonMatches();
@@ -557,13 +563,13 @@ function renderBettingTab() {
   const an = activeMatch.analysis;
 
   document.getElementById("matchSelectorBar").innerHTML = openMatches.map(m => {
-    const homeTeam = m.isHome ? "Oppidum S. Cagliari" : m.opponent;
-    const awayTeam = m.isHome ? m.opponent : "Oppidum S. Cagliari";
+    const homeTeam = m.isHome ? "OPPIDUM CAGLIARI" : m.opponent;
+    const awayTeam = m.isHome ? m.opponent : "OPPIDUM CAGLIARI";
     return `
       <button type="button" class="match-pill ${m.id === activeMatch.id ? "active" : ""}" onclick="selectMatch('${esc(m.id)}')">
         <div class="mp-date">
-          <span>${esc(m.title)}</span>
-          <span>${m.isHome ? "🏠 CASA" : "✈️ TRASFERTA"}</span>
+          <span>${esc(m.opponent)}</span>
+          <span>${m.isHome ? "🏠 CASA" : "✈️ FUORI"}</span>
         </div>
         <div class="mp-teams">${esc(homeTeam)} vs ${esc(awayTeam)}</div>
         <div class="mp-meta">1: <strong>${m.analysis.mainMarkets.odd1.toFixed(2)}</strong> · X: <strong>${m.analysis.mainMarkets.oddX.toFixed(2)}</strong> · 2: <strong>${m.analysis.mainMarkets.odd2.toFixed(2)}</strong></div>
@@ -571,14 +577,14 @@ function renderBettingTab() {
     `;
   }).join("");
 
-  const homeName = activeMatch.isHome ? "Oppidum Sport Cagliari" : activeMatch.opponent;
-  const awayName = activeMatch.isHome ? activeMatch.opponent : "Oppidum Sport Cagliari";
+  const homeName = activeMatch.isHome ? "OPPIDUM SPORT CAGLIARI" : activeMatch.opponent;
+  const awayName = activeMatch.isHome ? activeMatch.opponent : "OPPIDUM SPORT CAGLIARI";
   const presentCount = (activeMatch.presentPlayerIds || []).length;
 
   document.getElementById("featuredMatchBox").innerHTML = `
     <div class="fm-top">
-      <span>🏆 ${esc(activeMatch.title)} · Nuova Stagione Serie C</span>
-      <span>📅 ${esc(activeMatch.date)} · 🤽 ${presentCount} Giocatori Convocati/Presenti</span>
+      <span>🏆 Serie C — Girone 6 (C.R. Sardegna) · ${esc(activeMatch.title)}</span>
+      <span>📅 ${esc(activeMatch.date)} · 🤽 ${presentCount} Giocatori Presenti</span>
     </div>
     <div class="fm-teams">
       <div>
@@ -588,14 +594,15 @@ function renderBettingTab() {
       <div class="fm-vs">VS</div>
       <div>
         <div class="fm-team-name">${esc(awayName)}</div>
-        <div class="fm-team-sub">${activeMatch.isHome ? "Squadra Ospite" : "Oppidum in Trasferta"}</div>
+        <div class="fm-team-sub">${activeMatch.isHome ? "Avversaria Girone 6" : "Oppidum in Trasferta"}</div>
       </div>
     </div>
     <div class="ai-oracle-box">
       <div class="ai-oracle-header">
-        <span>🤖 Previsione Oracolo AI per la Nuova Stagione</span>
+        <span>🤖 Oracolo AI — Analisi Sfida Girone 6</span>
         <span>Gol Stimati AI: <strong>Oppidum ${an.lambdaOppidum}</strong> — <strong>${esc(activeMatch.opponent)} ${an.lambdaOpponent}</strong></span>
       </div>
+      <div style="font-size:0.82rem;color:#cbd5e1;">📌 ${esc(an.rivalNote || "Sfida ufficiale Girone 6 C.R. Sardegna")}</div>
       <div class="ai-prob-bar">
         <div class="ai-prob-1" style="width:${an.prob1}%"></div>
         <div class="ai-prob-x" style="width:${an.probX}%"></div>
@@ -662,7 +669,7 @@ function renderMarketsForMatch(match) {
       <div class="market-block">
         <div class="market-block-header">
           <div class="market-block-title">🤽 Esito Finale 1X2 &amp; Doppia Chance</div>
-          <span class="market-badge">Quote AI Nuova Stagione</span>
+          <span class="market-badge">Quote AI Girone 6</span>
         </div>
         <div class="odds-grid">
           ${oddButtonHtml(match, "1X2_1", `1 — Vince ${homeName}`, `Prob. AI ${an.prob1}%`, mm.odd1)}
@@ -694,7 +701,7 @@ function renderMarketsForMatch(match) {
     html += `
       <div class="market-block">
         <div class="market-block-header">
-          <div class="market-block-title">🎯 Quote Marcatori Oppidum (Giocatori Presenti/Convocati)</div>
+          <div class="market-block-title">🎯 Quote Marcatori Oppidum (Rosa Attiva)</div>
           <span class="market-badge">Inclusi Pittotti e Olla</span>
         </div>
         <div class="odds-grid scorers-grid">
@@ -1012,15 +1019,13 @@ function renderLeaderboardTab() {
       return `
         <tr>
           <td style="font-weight:900;font-size:1rem;">${medal}</td>
-          <td>
-            <strong>👤 ${esc(u.name)}</strong>
-          </td>
+          <td><strong>👤 ${esc(u.name)}</strong></td>
           <td style="color:var(--gold);font-weight:900;font-size:1.05rem;">${u.credits} Crediti 🪙</td>
           <td style="color:${net >= 0 ? '#34d399' : '#f87171'};font-weight:800;">${netStr}</td>
           <td style="color:#34d399;font-weight:700;">${u.wins || 0}</td>
           <td style="color:#f87171;font-weight:700;">${u.losses || 0}</td>
           <td>
-            <button type="button" class="btn btn-outline btn-sm" onclick="giveBonusCredits('${esc(u.id)}', 50)" title="Ricarica 50 Crediti">+50 Cr.</button>
+            <button type="button" class="btn btn-outline btn-sm" onclick="giveBonusCredits('${esc(u.id)}', 50)">+50 Cr.</button>
           </td>
         </tr>
       `;
@@ -1071,13 +1076,40 @@ function renderLeaderboardTab() {
 }
 
 // ============================================================
-// 8. TAB 3: ROSA NUOVA STAGIONE & REGISTRO PRESENZE PER PARTITA
+// 8. TAB 3: ROSA NUOVA STAGIONE, GIRONE 6 & REGISTRO PRESENZE
 // ============================================================
 function renderRosterAndPresenzeTab() {
   const playerStats = computeNewSeasonPlayerStats();
   const matches = getSeasonMatches();
 
-  // 1. Griglia Rosa Ufficiale Nuova Stagione (19 giocatori: Atzeni, Faret, Pittotti, Olla inclusi; senza Fortini e Frau)
+  // 0. Tabella Girone 6 C.R. Sardegna
+  const g6Body = document.getElementById("girone6StandingsBody");
+  if (g6Body) {
+    const standings = computeGirone6Table();
+    g6Body.innerHTML = standings.map((t, i) => {
+      const isOpp = t.name === "OPPIDUM SPORT CAGLIARI";
+      const diff = t.gf - t.ga;
+      return `
+        <tr style="${isOpp ? 'background:rgba(200,16,46,0.25);font-weight:700;' : ''}">
+          <td><strong>${i + 1}</strong></td>
+          <td>
+            <strong>${esc(t.name)}</strong>
+            ${isOpp ? `<span class="badge badge-gk" style="margin-left:6px;">LA NOSTRA SQUADRA</span>` : ""}
+          </td>
+          <td style="font-weight:900;color:var(--gold);">${t.pts}</td>
+          <td>${t.played}</td>
+          <td>${t.w}</td>
+          <td>${t.d}</td>
+          <td>${t.l}</td>
+          <td>${t.gf}</td>
+          <td>${t.ga}</td>
+          <td>${diff > 0 ? "+" + diff : diff}</td>
+        </tr>
+      `;
+    }).join("");
+  }
+
+  // 1. Griglia Rosa Ufficiale Nuova Stagione (19 giocatori)
   const rosterGrid = document.getElementById("rosterCardsGrid");
   if (rosterGrid) {
     rosterGrid.innerHTML = playerStats.map(p => {
@@ -1118,13 +1150,13 @@ function renderRosterAndPresenzeTab() {
       <th>RUOLO</th>
       ${matches.map((m, idx) => `
         <th title="${esc(m.title)}: vs ${esc(m.opponent)} (${esc(m.date)})">
-          G${idx + 1}: ${esc(m.opponent.slice(0, 8))}
+          ${esc(m.opponent.split(" ")[0])}
           <div style="font-size:0.65rem;color:${m.status === 'settled' ? '#34d399' : 'var(--gold)'};">
-            ${m.status === "settled" ? `${m.scoreUs}-${m.scoreThem}` : "In prog."}
+            ${m.status === "settled" ? `${m.scoreUs}-${m.scoreThem}` : "Conv."}
           </div>
         </th>
       `).join("")}
-      <th class="total-col">PRESENZE</th>
+      <th class="total-col">PRES. GARE</th>
       <th class="total-col">GOL</th>
     </tr>
   `;
@@ -1139,21 +1171,21 @@ function renderRosterAndPresenzeTab() {
           const goals = Number((m.playerGoals || {})[p.id] || 0);
           return `
             <td>
-              <label style="display:inline-flex;align-items:center;gap:4px;cursor:pointer;" title="Spunta se ${esc(p.name)} è presente in questa partita">
+              <label style="display:inline-flex;align-items:center;gap:4px;cursor:pointer;" title="Spunta se ${esc(p.name)} ha giocato / è presente contro ${esc(m.opponent)}">
                 <input type="checkbox" ${isPresent ? "checked" : ""}
                   onchange="togglePlayerPresenceInMatch('${esc(m.id)}', '${esc(p.id)}', this.checked)" />
                 ${!p.isGk && isPresent ? `
                   <input type="number" min="0" max="15" value="${goals}"
-                    style="width:44px;padding:2px 4px;font-size:0.75rem;text-align:center;"
+                    style="width:42px;padding:2px 4px;font-size:0.75rem;text-align:center;"
                     title="Gol segnati da ${esc(p.name)}"
                     onchange="updatePlayerGoalsInMatch('${esc(m.id)}', '${esc(p.id)}', this.value)" />
-                ` : `<span style="font-size:0.72rem;color:var(--text-muted);">${isPresent ? "Pres." : "Ass."}</span>`}
+                ` : `<span style="font-size:0.7rem;color:var(--text-muted);">${isPresent ? "Sì" : "No"}</span>`}
               </label>
             </td>
           `;
         }).join("")}
-        <td class="total-col">${matches.filter(m => (m.presentPlayerIds || []).includes(p.id)).length}</td>
-        <td class="total-col">${matches.reduce((acc, m) => acc + Number((m.playerGoals || {})[p.id] || 0), 0)}</td>
+        <td class="total-col">${p.newSeasonApps}</td>
+        <td class="total-col">${p.newSeasonGoals}</td>
       </tr>
     `;
   }).join("");
@@ -1171,13 +1203,12 @@ function togglePlayerPresenceInMatch(matchId, playerId, isPresent) {
     if (m.playerGoals) delete m.playerGoals[playerId];
   }
   m.presentPlayerIds = Array.from(set);
-  // Ricalcola le quote marcatori AI sulla base dei presenti aggiornati
   m.analysis = generateAiOddsForMatch(m.opponent, m.isHome, m.boostOppidum || 1.15, m.presentPlayerIds);
 
   saveSeasonMatches(matches);
   renderRosterAndPresenzeTab();
   renderBettingTab();
-  showToast(`✅ Presenze aggiornate per <strong>vs ${esc(m.opponent)}</strong> (Quote AI ricalcolate sui presenti!)`);
+  showToast(`✅ Presenze aggiornate per <strong>vs ${esc(m.opponent)}</strong>!`);
 }
 
 function updatePlayerGoalsInMatch(matchId, playerId, goalsVal) {
@@ -1204,15 +1235,15 @@ function renderOracleTab() {
       <div class="market-block" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
         <div>
           <div style="font-weight:800;font-size:1rem;">
-            ${esc(m.title)} — ${m.isHome ? "🏠 Oppidum vs " + esc(m.opponent) : "✈️ " + esc(m.opponent) + " vs Oppidum"}
-            ${m.status === "settled" ? `<span class="badge badge-won" style="margin-left:6px;">FINALE: ${m.scoreUs}-${m.scoreThem}</span>` : `<span class="badge badge-open" style="margin-left:6px;">APERTA</span>`}
+            ${esc(m.title)} — ${m.isHome ? "🏠 OPPIDUM vs " + esc(m.opponent) : "✈️ " + esc(m.opponent) + " vs OPPIDUM"}
+            ${m.status === "settled" ? `<span class="badge badge-won" style="margin-left:6px;">FINALE: ${m.scoreUs}-${m.scoreThem}</span>` : `<span class="badge badge-open" style="margin-left:6px;">QUOTE APERTE</span>`}
           </div>
           <div class="panel-sub">
             📅 ${esc(m.date)} · Presenti: <strong>${(m.presentPlayerIds || []).length}/19</strong> · Quote 1X2: <strong>${m.analysis.mainMarkets.odd1.toFixed(2)} / ${m.analysis.mainMarkets.oddX.toFixed(2)} / ${m.analysis.mainMarkets.odd2.toFixed(2)}</strong>
           </div>
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          <button type="button" class="btn btn-navy btn-sm" onclick="selectMatchForCustomOdds('${esc(m.id)}')">✏️ Modifica Quote / Risultato</button>
+          <button type="button" class="btn btn-navy btn-sm" onclick="selectMatchForCustomOdds('${esc(m.id)}')">✏️ Modifica Data / Quote / Risultato</button>
           <button type="button" class="btn btn-whatsapp btn-sm" onclick="shareMatchOddsWhatsApp('${esc(m.id)}')">📲 Condividi Quote</button>
           <button type="button" class="btn btn-outline btn-sm" onclick="deleteSeasonMatch('${esc(m.id)}')">🗑️</button>
         </div>
@@ -1231,8 +1262,8 @@ function createNewAiMatch(e) {
   const customOpp = document.getElementById("newMatchCustomOpponent").value.trim();
   const opponent = opponentSel === "CUSTOM" ? (customOpp || "Avversario Serie C") : opponentSel;
   const isHome = document.getElementById("newMatchVenue").value === "home";
-  const dateStr = document.getElementById("newMatchDate").value.trim() || "Sabato · Ore 15:00";
-  const titleStr = document.getElementById("newMatchComp").value.trim() || "Nuova Giornata — Serie C";
+  const dateStr = document.getElementById("newMatchDate").value.trim() || "Data da definire (Girone 6)";
+  const titleStr = document.getElementById("newMatchComp").value.trim() || "Girone 6 — C.R. Sardegna";
   const boost = parseFloat(document.getElementById("newMatchBoost").value) || 1.15;
 
   const allIds = getAllRosterIds();
@@ -1240,7 +1271,7 @@ function createNewAiMatch(e) {
   const matches = getSeasonMatches();
 
   const newMatch = {
-    id: uid("ns_match"),
+    id: uid("g6_match"),
     title: titleStr,
     date: dateStr,
     opponent,
@@ -1261,7 +1292,7 @@ function createNewAiMatch(e) {
   renderBettingTab();
   renderOracleTab();
   renderRosterAndPresenzeTab();
-  showToast(`🤖 Partita <strong>Oppidum vs ${esc(opponent)}</strong> creata e quote calcolate dall'AI!`);
+  showToast(`🤖 Partita <strong>OPPIDUM vs ${esc(opponent)}</strong> creata e quote calcolate dall'AI!`);
 }
 
 function selectMatchForCustomOdds(matchId) {
@@ -1293,7 +1324,7 @@ function renderCustomOddsEditor(match) {
       <div>
         <span class="badge badge-gk">${esc(match.title)}</span>
         <strong style="margin-left:8px;font-size:1.05rem;">
-          ${match.isHome ? "Oppidum S. Cagliari vs " + esc(match.opponent) : esc(match.opponent) + " vs Oppidum S. Cagliari"}
+          ${match.isHome ? "OPPIDUM SPORT CAGLIARI vs " + esc(match.opponent) : esc(match.opponent) + " vs OPPIDUM SPORT CAGLIARI"}
         </strong>
       </div>
       <button type="button" class="btn btn-outline btn-sm" onclick="recalculateAiForMatch('${esc(match.id)}')">
@@ -1302,6 +1333,17 @@ function renderCustomOddsEditor(match) {
     </div>
 
     <div class="form-grid">
+      <div class="field">
+        <label>Data / Giornata (Appena esce il calendario)</label>
+        <input type="text" id="editMatchDate" value="${esc(match.date)}" />
+      </div>
+      <div class="field">
+        <label>Casa / Trasferta</label>
+        <select id="editMatchIsHome">
+          <option value="home" ${match.isHome ? "selected" : ""}>🏠 In Casa (Piscina Terramaini)</option>
+          <option value="away" ${!match.isHome ? "selected" : ""}>✈️ In Trasferta</option>
+        </select>
+      </div>
       <div class="field">
         <label>Quota 1 (${match.isHome ? "Oppidum" : esc(match.opponent)})</label>
         <input type="number" step="0.05" id="editOdd1" value="${mm.odd1}" />
@@ -1324,7 +1366,7 @@ function renderCustomOddsEditor(match) {
       </div>
     </div>
     <button type="button" class="btn btn-primary btn-sm" onclick="saveManualMainOdds('${esc(match.id)}')">
-      💾 Salva Quote Modificate
+      💾 Salva Data &amp; Quote Modificate
     </button>
 
     <hr style="border:none;border-top:1px solid var(--border);margin:18px 0;" />
@@ -1350,10 +1392,10 @@ function renderCustomOddsEditor(match) {
 
     <hr style="border:none;border-top:1px solid var(--border);margin:18px 0;" />
 
-    <h4 style="margin-bottom:10px;font-size:0.95rem;">🏁 Referta Risultato Finale Partita (Aggiorna Statistiche Nuova Stagione)</h4>
+    <h4 style="margin-bottom:10px;font-size:0.95rem;">🏁 Referta Risultato Finale Partita (Aggiorna Classifica Girone 6 &amp; Presenze)</h4>
     <div class="form-grid">
       <div class="field">
-        <label>Gol Oppidum S. Cagliari</label>
+        <label>Gol OPPIDUM SPORT CAGLIARI</label>
         <input type="number" min="0" max="40" id="settleScoreUs" value="${match.scoreUs ?? 10}" />
       </div>
       <div class="field">
@@ -1362,7 +1404,7 @@ function renderCustomOddsEditor(match) {
       </div>
     </div>
     <button type="button" class="btn btn-navy btn-sm" onclick="recordMatchResult('${esc(match.id)}')">
-      ✅ Salva Risultato Ufficiale &amp; Aggiorna Presenze/Statistiche
+      ✅ Salva Risultato Ufficiale &amp; Aggiorna Classifica Girone 6
     </button>
   `;
 }
@@ -1371,6 +1413,11 @@ function saveManualMainOdds(matchId) {
   const matches = getSeasonMatches();
   const m = matches.find(x => x.id === matchId);
   if (!m) return;
+
+  const newDate = document.getElementById("editMatchDate")?.value.trim();
+  const newIsHome = document.getElementById("editMatchIsHome")?.value === "home";
+  if (newDate) m.date = newDate;
+  m.isHome = newIsHome;
 
   m.analysis.mainMarkets.odd1 = parseFloat(document.getElementById("editOdd1").value) || m.analysis.mainMarkets.odd1;
   m.analysis.mainMarkets.oddX = parseFloat(document.getElementById("editOddX").value) || m.analysis.mainMarkets.oddX;
@@ -1381,13 +1428,17 @@ function saveManualMainOdds(matchId) {
   saveSeasonMatches(matches);
   renderBettingTab();
   renderOracleTab();
-  showToast("✅ Quote aggiornate manualmente!");
+  showToast("✅ Data e quote aggiornate!");
 }
 
 function recalculateAiForMatch(matchId) {
   const matches = getSeasonMatches();
   const m = matches.find(x => x.id === matchId);
   if (!m) return;
+  const newIsHome = document.getElementById("editMatchIsHome")
+    ? document.getElementById("editMatchIsHome").value === "home"
+    : m.isHome;
+  m.isHome = newIsHome;
   m.analysis = generateAiOddsForMatch(m.opponent, m.isHome, m.boostOppidum || 1.15, m.presentPlayerIds);
   saveSeasonMatches(matches);
   renderBettingTab();
@@ -1437,7 +1488,7 @@ function recordMatchResult(matchId) {
   renderBettingTab();
   renderOracleTab();
   renderRosterAndPresenzeTab();
-  showToast(`🏁 Risultato <strong>Oppidum ${scoreUs} - ${scoreThem} ${esc(m.opponent)}</strong> registrato! Presenze e statistiche di stagione aggiornate.`);
+  showToast(`🏁 Risultato <strong>OPPIDUM ${scoreUs} - ${scoreThem} ${esc(m.opponent)}</strong> registrato! Classifica Girone 6 e Presenze aggiornate.`);
 }
 
 function shareMatchOddsWhatsApp(matchId) {
@@ -1449,8 +1500,8 @@ function shareMatchOddsWhatsApp(matchId) {
   const topScorers = an.scorerMarkets.slice(0, 6);
 
   const text = [
-    `🤽‍♂️ *OPPIDUM BET — QUOTE UFFICIALI NUOVA STAGIONE* 🔴🔵`,
-    `🏆 *${m.title}: ${m.isHome ? "Oppidum vs " + m.opponent : m.opponent + " vs Oppidum"}*`,
+    `🤽‍♂️ *OPPIDUM BET — QUOTE GIRONE 6 (C.R. SARDEGNA)* 🔴🔵`,
+    `🏆 *${m.isHome ? "OPPIDUM CAGLIARI vs " + m.opponent : m.opponent + " vs OPPIDUM CAGLIARI"}*`,
     `📅 ${m.date}`,
     ``,
     `📊 *ESITO 1X2:*`,
