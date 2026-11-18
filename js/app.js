@@ -1,19 +1,16 @@
 /* ============================================================
-   OPPIDUM BET — Nuova Stagione Serie C (Girone 6 - C.R. Sardegna)
-   - Girone 6 Ufficiale (10 squadre, calendario in uscita)
-   - Dati scorsa stagione mantenuti SOLO nel motore AI interno
-   - Login semplice con partenza a 100 Crediti per tutti
-   - Rosa Nuova Stagione (con Atzeni, Faret, Pittotti e Olla;
-     esclusi Fortini e Frau)
-   - Gestione Presenze per partita + Classifica Scommettitori
+   OPPIDUM BET — Serie C Girone 6 (C.R. Sardegna)
+   - Blocco automatico scommesse al fischio d'inizio (kickoffIso)
+   - Classifica provvisoria, Calendario e Statistiche Giocatori
+   - Scommettitore 1..5 e 2 partite di esempio con quote AI
    ============================================================ */
 
 const STORAGE_KEYS = {
-  USERS: "oppidum_season_users_v6",
-  CURRENT_USER: "oppidum_season_current_user_v6",
-  BETS: "oppidum_season_bets_v6",
-  MATCHES: "oppidum_season_matches_v6",
-  APPEARANCES_REF: "oppidum_season_hist_apps_v6"
+  USERS: "oppidum_season_users_v7",
+  CURRENT_USER: "oppidum_season_current_user_v7",
+  BETS: "oppidum_season_bets_v7",
+  MATCHES: "oppidum_season_matches_v7",
+  APPEARANCES_REF: "oppidum_season_hist_apps_v7"
 };
 
 const STARTING_CREDITS = 100;
@@ -22,20 +19,19 @@ const STARTING_CREDITS = 100;
 // 1. SOCIETÀ DEL CAMPIONATO & RIFERIMENTO AI INTERNO
 // ============================================================
 const GIRONE_6_TEAMS = [
-  "ANACONDA PALLANUOTO",
-  "ANTARES N e PN LATINA",
-  "AQUADEMIA",
-  "BABEL",
-  "CENTUMCELLAE PALLANUOTO",
-  "LAZIO PALLANUOTO",
-  "OPPIDUM SPORT CAGLIARI",
-  "R.N. CAGLIARI",
-  "VILLA AURELIA S.C.",
-  "ZERO9 TEAM"
+  "Anaconda PN",
+  "Aqvaroma",
+  "Bellator Frusino",
+  "Castelli Romani",
+  "De Virtute Roma",
+  "Imperium",
+  "Oppidum S. Cagliari",
+  "Promogest Quartu SE",
+  "RN Cagliari",
+  "RN Roma Vis Nova"
 ];
 
 const HISTORICAL_AI_REFERENCE = {
-  // Parametri di forza calcolati sulle 18 giornate della scorsa stagione + Girone 6
   teamsStrength: {
     "Bellator Frusino":        { gf: 277, ga: 185, note: "Avversaria di vertice · Attacco molto prolifico" },
     "De Virtute Roma":         { gf: 263, ga: 192, note: "Formazione capitolina solida e ben strutturata" },
@@ -79,7 +75,9 @@ const HISTORICAL_AI_REFERENCE = {
     { id: "orru",       name: "ORRU'",      role: "Universale",  isGk: false, histGoals: 0,  histApps: 8,  note: "Universale" },
     { id: "pittotti",   name: "PITTOTTI",   role: "Universale",  isGk: false, histGoals: 0,  histApps: 1,  note: "Universale" },
     { id: "olla",       name: "OLLA",       role: "Universale",  isGk: false, histGoals: 0,  histApps: 0,  note: "Universale" }
-  ]
+  ],
+  // Calendario Ufficiale (Attualmente vuoto perché non ancora uscito; quando uscirà basterà popolarlo qui)
+  officialCalendar: []
 };
 
 // ---------- STATO GLOBALE ----------
@@ -110,11 +108,48 @@ function showToast(msg) {
   setTimeout(() => {
     el.style.opacity = "0";
     setTimeout(() => el.remove(), 250);
-  }, 3400);
+  }, 3600);
 }
 
 // ============================================================
-// 2. SISTEMA DI LOGIN SEMPLICE & CREDITI (100 CREDITI INIZIALI)
+// 2. CONTROLLO FISCHIO D'INIZIO (BLOCCO SCOMMESSE POST-INIZIO)
+// ============================================================
+function isMatchBettingClosed(match) {
+  if (!match) return true;
+  if (match.status === "settled" || match.status === "closed") return true;
+  if (match.kickoffIso) {
+    const kickoffMs = new Date(match.kickoffIso).getTime();
+    if (!isNaN(kickoffMs) && Date.now() >= kickoffMs) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function formatKickoffCountdown(kickoffIso) {
+  if (!kickoffIso) return "Fischio d'inizio da definire";
+  const kickoffMs = new Date(kickoffIso).getTime();
+  if (isNaN(kickoffMs)) return "Fischio d'inizio da definire";
+
+  const diff = kickoffMs - Date.now();
+  const formattedDate = new Date(kickoffMs).toLocaleString("it-IT", {
+    weekday: "short", day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit"
+  });
+
+  if (diff <= 0) {
+    return `🔒 SCOMMESSE CHIUSE · Fischio d'inizio superato (${formattedDate})`;
+  }
+
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+  const mins = Math.floor((diff / (1000 * 60)) % 60);
+  const secs = Math.floor((diff / 1000) % 60);
+
+  return `⏳ Chiude al fischio d'inizio (${formattedDate}) · Tempo rimasto: ${days}g ${hours}h ${mins}m ${secs}s`;
+}
+
+// ============================================================
+// 3. SISTEMA DI LOGIN SEMPLICE & CREDITI (100 CREDITI INIZIALI)
 // ============================================================
 function getUsers() {
   const raw = localStorage.getItem(STORAGE_KEYS.USERS);
@@ -224,7 +259,7 @@ function renderQuickLoginUsersList() {
     return;
   }
   box.innerHTML = `
-    <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:8px;">Oppure entra con un clic su un profilo già registrato:</div>
+    <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:8px;">Oppure entra con un clic su un profilo esistente:</div>
     <div style="display:flex;flex-wrap:wrap;gap:8px;">
       ${users.map(u => `
         <button type="button" class="btn btn-outline btn-sm" onclick="quickLoginAs('${esc(u.id)}')">
@@ -258,7 +293,7 @@ function renderAuthHeader() {
 }
 
 // ============================================================
-// 3. MOTORE AI DI POISSON BASATO SULLO STORICO + PRESENZE
+// 4. MOTORE AI DI POISSON BASATO SULLO STORICO + PRESENZE
 // ============================================================
 function factorial(n) {
   let r = 1;
@@ -288,7 +323,6 @@ function getHistoricalAppearancesMap() {
   return map;
 }
 
-// Statistiche della NUOVA STAGIONE calcolate dalle partite giocate/refertate
 function computeNewSeasonPlayerStats() {
   const matches = getSeasonMatches();
   const playedMatches = matches.filter(m => m.status === "settled");
@@ -409,12 +443,12 @@ function generateAiOddsForMatch(opponentName, isHome = true, boostOppidum = 1.15
   ];
 
   const goliardicMarkets = [
-    { id: "gol_olla_esordio", label: "🆕 OLLA segna in questa partita!", sub: "Speciale nuovo acquisto della stagione", odd: 2.90 },
-    { id: "gol_pittotti_gol", label: "💥 PITTOTTI sblocca il tabellino e segna!", sub: "Primo gol ufficiale con birra pagata", odd: 4.20 },
+    { id: "gol_olla_esordio", label: "🆕 OLLA segna in questa partita!", sub: "Quota speciale nuovo innesto", odd: 2.90 },
+    { id: "gol_pittotti_gol", label: "💥 PITTOTTI sblocca il tabellino e segna!", sub: "Primo gol stagionale", odd: 4.20 },
     { id: "gol_cannas_urlo",  label: "📢 Mister Chicco Cannas perde la voce entro il 2° tempo", sub: "Classico di Terramaini", odd: 1.45 },
     { id: "gol_melis_lob",    label: "🤽 MELIS segna con palombella ignorante", sub: "Tocco morbido sotto l'incrocio", odd: 2.30 },
-    { id: "gol_proteste",     label: "🟥 Almeno un'espulsione per proteste in partita", sub: "Tensione agonistica da Girone 6", odd: 1.75 },
-    { id: "gol_ichnusa",      label: "🍺 Cassa di Ichnusa portata nello spogliatoio a fine gara", sub: "Vittoria morale garantita", odd: 1.35 }
+    { id: "gol_proteste",     label: "🟥 Almeno un'espulsione per proteste in partita", sub: "Tensione agonistica in vasca", odd: 1.75 },
+    { id: "gol_ichnusa",      label: "🍺 Cassa di Ichnusa portata nello spogliatoio a fine gara", sub: "Terzo tempo assicurato", odd: 1.35 }
   ];
 
   return {
@@ -423,7 +457,7 @@ function generateAiOddsForMatch(opponentName, isHome = true, boostOppidum = 1.15
     prob1: Math.round(p1 * 100),
     probX: Math.round(pX * 100),
     prob2: Math.round(p2 * 100),
-    rivalNote: oppRef?.note || "Sfida del Girone 6 — C.R. Sardegna",
+    rivalNote: oppRef?.note || "Sfida di campionato Serie C",
     mainMarkets: {
       odd1: probToOdd(p1, 1.06),
       oddX: probToOdd(pX, 1.05),
@@ -447,7 +481,7 @@ function generateAiOddsForMatch(opponentName, isHome = true, boostOppidum = 1.15
 }
 
 // ============================================================
-// 4. SFIDE DEL GIRONE 6 (IN ATTESA DEL CALENDARIO UFFICIALE)
+// 5. PARTITE (CON ORARIO FISCHIO D'INIZIO) E CLASSIFICA
 // ============================================================
 function getAllRosterIds() {
   return HISTORICAL_AI_REFERENCE.roster.map(p => p.id);
@@ -466,7 +500,8 @@ function getSeasonMatches() {
     {
       id: "ex_match_1",
       title: "Partita di Esempio 1 — Serie C",
-      date: "Calendario in uscita · Piscina Terramaini",
+      date: "Sabato 28 Nov 2026 · Ore 15:00",
+      kickoffIso: "2026-11-28T15:00:00+01:00",
       opponent: "Promogest Quartu SE",
       isHome: true,
       boostOppidum: 1.15,
@@ -480,7 +515,8 @@ function getSeasonMatches() {
     {
       id: "ex_match_2",
       title: "Partita di Esempio 2 — Serie C",
-      date: "Calendario in uscita · Piscina Terramaini",
+      date: "Sabato 5 Dic 2026 · Ore 16:30",
+      kickoffIso: "2026-12-05T16:30:00+01:00",
       opponent: "RN Cagliari",
       isHome: true,
       boostOppidum: 1.15,
@@ -512,7 +548,6 @@ function saveBetSlips(slips) {
   localStorage.setItem(STORAGE_KEYS.BETS, JSON.stringify(slips));
 }
 
-// Calcola la classifica live dalle partite refertate della nuova stagione
 function computeGirone6Table() {
   const table = {};
   GIRONE_6_TEAMS.forEach(name => {
@@ -565,7 +600,7 @@ function switchTab(tabId) {
 }
 
 // ============================================================
-// 5. RENDERING TAB 1: PALINSESTO & SCOMMESSE GIRONE 6
+// 6. RENDERING TAB 1: PALINSESTO & SCOMMESSE (CON CUT-OFF)
 // ============================================================
 function renderBettingTab() {
   const allMatches = getSeasonMatches();
@@ -579,7 +614,7 @@ function renderBettingTab() {
       <div style="text-align:center;padding:28px 16px;">
         <div style="font-size:2.4rem;margin-bottom:10px;">📅</div>
         <h4 style="font-family:'Space Grotesk',sans-serif;font-size:1.25rem;margin-bottom:8px;">
-          In attesa del Calendario Ufficiale — Serie C Girone 6
+          In attesa del Calendario Ufficiale — Serie C
         </h4>
         <p class="panel-sub" style="max-width:540px;margin:0 auto;">
           Le partite e le relative quote calcolate dall'AI saranno disponibili non appena verrà pubblicato il calendario ufficiale della stagione.
@@ -599,15 +634,17 @@ function renderBettingTab() {
 
   const activeMatch = openMatches.find(m => m.id === appState.selectedMatchId) || openMatches[0];
   const an = activeMatch.analysis;
+  const closed = isMatchBettingClosed(activeMatch);
 
   document.getElementById("matchSelectorBar").innerHTML = openMatches.map(m => {
-    const homeTeam = m.isHome ? "OPPIDUM CAGLIARI" : m.opponent;
-    const awayTeam = m.isHome ? m.opponent : "OPPIDUM CAGLIARI";
+    const homeTeam = m.isHome ? "Oppidum S. Cagliari" : m.opponent;
+    const awayTeam = m.isHome ? m.opponent : "Oppidum S. Cagliari";
+    const isClosed = isMatchBettingClosed(m);
     return `
       <button type="button" class="match-pill ${m.id === activeMatch.id ? "active" : ""}" onclick="selectMatch('${esc(m.id)}')">
         <div class="mp-date">
-          <span>${esc(m.opponent)}</span>
-          <span>${m.isHome ? "🏠 CASA" : "✈️ FUORI"}</span>
+          <span>${esc(m.title)}</span>
+          <span>${isClosed ? "🔒 CHIUSA" : (m.isHome ? "🏠 CASA" : "✈️ FUORI")}</span>
         </div>
         <div class="mp-teams">${esc(homeTeam)} vs ${esc(awayTeam)}</div>
         <div class="mp-meta">1: <strong>${m.analysis.mainMarkets.odd1.toFixed(2)}</strong> · X: <strong>${m.analysis.mainMarkets.oddX.toFixed(2)}</strong> · 2: <strong>${m.analysis.mainMarkets.odd2.toFixed(2)}</strong></div>
@@ -615,32 +652,33 @@ function renderBettingTab() {
     `;
   }).join("");
 
-  const homeName = activeMatch.isHome ? "OPPIDUM SPORT CAGLIARI" : activeMatch.opponent;
-  const awayName = activeMatch.isHome ? activeMatch.opponent : "OPPIDUM SPORT CAGLIARI";
-  const presentCount = (activeMatch.presentPlayerIds || []).length;
+  const homeName = activeMatch.isHome ? "Oppidum S. Cagliari" : activeMatch.opponent;
+  const awayName = activeMatch.isHome ? activeMatch.opponent : "Oppidum S. Cagliari";
 
   document.getElementById("featuredMatchBox").innerHTML = `
     <div class="fm-top">
-      <span>🏆 Serie C — Girone 6 (C.R. Sardegna) · ${esc(activeMatch.title)}</span>
-      <span>📅 ${esc(activeMatch.date)} · 🤽 ${presentCount} Giocatori Presenti</span>
+      <span>🏆 ${esc(activeMatch.title)}</span>
+      <span id="liveKickoffBanner" style="color:${closed ? '#f87171' : 'var(--gold)'};font-weight:700;">
+        ${formatKickoffCountdown(activeMatch.kickoffIso)}
+      </span>
     </div>
     <div class="fm-teams">
       <div>
         <div class="fm-team-name">${esc(homeName)}</div>
         <div class="fm-team-sub">${activeMatch.isHome ? "Piscina Terramaini · Rossoblù" : "Squadra Ospitante"}</div>
       </div>
-      <div class="fm-vs">VS</div>
+      <div class="fm-vs">${closed ? "🔒" : "VS"}</div>
       <div>
         <div class="fm-team-name">${esc(awayName)}</div>
-        <div class="fm-team-sub">${activeMatch.isHome ? "Avversaria Girone 6" : "Oppidum in Trasferta"}</div>
+        <div class="fm-team-sub">${activeMatch.isHome ? "Squadra Ospite" : "Oppidum in Trasferta"}</div>
       </div>
     </div>
     <div class="ai-oracle-box">
       <div class="ai-oracle-header">
-        <span>🤖 Oracolo AI — Analisi Sfida Girone 6</span>
+        <span>🤖 Analisi Pre-Partita Oracolo AI</span>
         <span>Gol Stimati AI: <strong>Oppidum ${an.lambdaOppidum}</strong> — <strong>${esc(activeMatch.opponent)} ${an.lambdaOpponent}</strong></span>
       </div>
-      <div style="font-size:0.82rem;color:#cbd5e1;">📌 ${esc(an.rivalNote || "Sfida ufficiale Girone 6 C.R. Sardegna")}</div>
+      <div style="font-size:0.82rem;color:#cbd5e1;">📌 ${esc(an.rivalNote || "Sfida di campionato Serie C")}</div>
       <div class="ai-prob-bar">
         <div class="ai-prob-1" style="width:${an.prob1}%"></div>
         <div class="ai-prob-x" style="width:${an.probX}%"></div>
@@ -656,6 +694,17 @@ function renderBettingTab() {
 
   renderMarketsForMatch(activeMatch);
 }
+
+// Aggiorna il countdown del fischio d'inizio ogni secondo
+setInterval(() => {
+  const banner = document.getElementById("liveKickoffBanner");
+  if (!banner) return;
+  const openMatches = getSeasonMatches().filter(m => m.status === "open");
+  const activeMatch = openMatches.find(m => m.id === appState.selectedMatchId) || openMatches[0];
+  if (activeMatch) {
+    banner.textContent = formatKickoffCountdown(activeMatch.kickoffIso);
+  }
+}, 1000);
 
 function selectMatch(matchId) {
   appState.selectedMatchId = matchId;
@@ -678,11 +727,12 @@ function isPickSelected(matchId, marketKey) {
 
 function oddButtonHtml(match, marketKey, label, sub, odd) {
   const sel = isPickSelected(match.id, marketKey) ? "selected" : "";
+  const closed = isMatchBettingClosed(match);
   const matchTitle = match.isHome
     ? `Oppidum vs ${match.opponent}`
     : `${match.opponent} vs Oppidum`;
   return `
-    <button type="button" class="odd-btn ${sel}"
+    <button type="button" class="odd-btn ${sel}" ${closed ? "disabled style='opacity:0.45;cursor:not-allowed;'" : ""}
       onclick="toggleBetPick('${esc(match.id)}', '${esc(matchTitle)}', '${esc(marketKey)}', '${esc(label)}', ${Number(odd)})">
       <div>
         <span class="odd-label">${esc(label)}</span>
@@ -697,17 +747,26 @@ function renderMarketsForMatch(match) {
   const cat = appState.activeMarketCategory;
   const an = match.analysis;
   const mm = an.mainMarkets;
+  const closed = isMatchBettingClosed(match);
   const homeName = match.isHome ? "Oppidum" : match.opponent;
   const awayName = match.isHome ? match.opponent : "Oppidum";
 
   let html = "";
+
+  if (closed) {
+    html += `
+      <div class="market-block" style="border-color:#ef4444;background:rgba(239,68,68,0.12);">
+        <strong style="color:#fca5a5;">🔒 Fischio d'inizio superato:</strong> le scommesse per questa partita sono chiuse e non vengono più conteggiate.
+      </div>
+    `;
+  }
 
   if (cat === "all" || cat === "main") {
     html += `
       <div class="market-block">
         <div class="market-block-header">
           <div class="market-block-title">🤽 Esito Finale 1X2 &amp; Doppia Chance</div>
-          <span class="market-badge">Quote AI Girone 6</span>
+          <span class="market-badge">Valide fino al fischio d'inizio</span>
         </div>
         <div class="odds-grid">
           ${oddButtonHtml(match, "1X2_1", `1 — Vince ${homeName}`, `Prob. AI ${an.prob1}%`, mm.odd1)}
@@ -748,24 +807,25 @@ function renderMarketsForMatch(match) {
             const sel2 = isPickSelected(match.id, `SC_${sc.playerId}_2`) ? "selected" : "";
             const sel3 = isPickSelected(match.id, `SC_${sc.playerId}_3`) ? "selected" : "";
             const matchTitle = match.isHome ? `Oppidum vs ${match.opponent}` : `${match.opponent} vs Oppidum`;
+            const disAttr = closed ? "disabled style='opacity:0.45;cursor:not-allowed;'" : "";
             return `
               <div class="scorer-market-row">
                 <div class="scorer-info">
                   <span class="scorer-name">🤽 ${esc(sc.name)}</span>
-                  <span class="scorer-stat-pill">${sc.newSeasonGoals} gol · ${sc.newSeasonApps} pres.</span>
+                  <span class="scorer-stat-pill">xG ${sc.expectedGoals}</span>
                 </div>
                 <div class="scorer-odds-mini">
-                  <button type="button" class="odd-btn ${sel1}"
+                  <button type="button" class="odd-btn ${sel1}" ${disAttr}
                     onclick="toggleBetPick('${esc(match.id)}', '${esc(matchTitle)}', 'SC_${sc.playerId}_1', '${esc(sc.name)} Segna 1+', ${sc.odd1Plus})">
                     <span class="odd-label">Segna 1+</span>
                     <span class="odd-val">${sc.odd1Plus.toFixed(2)}</span>
                   </button>
-                  <button type="button" class="odd-btn ${sel2}"
+                  <button type="button" class="odd-btn ${sel2}" ${disAttr}
                     onclick="toggleBetPick('${esc(match.id)}', '${esc(matchTitle)}', 'SC_${sc.playerId}_2', '${esc(sc.name)} 2+ Gol', ${sc.odd2Plus})">
                     <span class="odd-label">2+ Gol</span>
                     <span class="odd-val">${sc.odd2Plus.toFixed(2)}</span>
                   </button>
-                  <button type="button" class="odd-btn ${sel3}"
+                  <button type="button" class="odd-btn ${sel3}" ${disAttr}
                     onclick="toggleBetPick('${esc(match.id)}', '${esc(matchTitle)}', 'SC_${sc.playerId}_3', '${esc(sc.name)} 3+ Gol', ${sc.odd3Plus})">
                     <span class="odd-label">3+ Gol</span>
                     <span class="odd-val">${sc.odd3Plus.toFixed(2)}</span>
@@ -815,9 +875,16 @@ function renderMarketsForMatch(match) {
 }
 
 // ============================================================
-// 6. SCHEDINA INTERATTIVA (BET SLIP)
+// 7. SCHEDINA INTERATTIVA (CON VERIFICA FISCHIO D'INIZIO)
 // ============================================================
 function toggleBetPick(matchId, matchTitle, marketKey, label, odd) {
+  const matches = getSeasonMatches();
+  const match = matches.find(m => m.id === matchId);
+  if (isMatchBettingClosed(match)) {
+    showToast("⛔ Scommesse chiuse per questa partita: il fischio d'inizio è già passato!");
+    return;
+  }
+
   const idx = appState.betSlip.findIndex(i => i.matchId === matchId && i.marketKey === marketKey);
   if (idx >= 0) {
     appState.betSlip.splice(idx, 1);
@@ -866,7 +933,7 @@ function renderBetSlip() {
     bodyEl.innerHTML = `
       <div class="betslip-empty">
         <div style="font-size:2rem;margin-bottom:6px;">🎫</div>
-        Clicca sulle quote della partita per creare la tua schedina!
+        Clicca sulle quote della partita per comporre la tua schedina (valida fino al fischio d'inizio).
       </div>
     `;
     return;
@@ -947,6 +1014,19 @@ function placeBetSlip() {
     return;
   }
 
+  // Verifica rigorosa che NESSUNA partita nella schedina abbia già superato il fischio d'inizio
+  const matches = getSeasonMatches();
+  for (const pick of appState.betSlip) {
+    const m = matches.find(x => x.id === pick.matchId);
+    if (isMatchBettingClosed(m)) {
+      showToast(`⛔ Scommessa non conteggiata: la partita "${esc(pick.matchTitle)}" è già iniziata!`);
+      appState.betSlip = appState.betSlip.filter(x => x.matchId !== pick.matchId);
+      renderBettingTab();
+      renderBetSlip();
+      return;
+    }
+  }
+
   const users = getUsers();
   const user = users.find(u => u.id === currentUser.id);
   const stakeInput = document.getElementById("betStakeInput");
@@ -959,6 +1039,7 @@ function placeBetSlip() {
 
   const totalOdd = Number(appState.betSlip.reduce((acc, item) => acc * item.odd, 1).toFixed(2));
   const potentialPayout = Math.round(stake * totalOdd);
+  const nowIso = new Date().toISOString();
 
   user.credits -= stake;
   user.totalStaked = (user.totalStaked || 0) + stake;
@@ -969,6 +1050,7 @@ function placeBetSlip() {
     id: uid("slip"),
     userId: user.id,
     userName: user.name,
+    placedAtIso: nowIso,
     createdAt: new Date().toLocaleString("it-IT", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" }),
     picks: [...appState.betSlip],
     stake,
@@ -983,7 +1065,7 @@ function placeBetSlip() {
   renderBettingTab();
   renderBetSlip();
   renderLeaderboardTab();
-  showToast(`🎉 Schedina giocata da <strong>${esc(user.name)}</strong>! Vincita potenziale: <strong>${potentialPayout} Crediti</strong>`);
+  showToast(`✅ Schedina convalidata entro il fischio d'inizio per <strong>${esc(user.name)}</strong>! Vincita potenziale: <strong>${potentialPayout} Crediti</strong>`);
 }
 
 function shareCurrentSlipWhatsApp() {
@@ -1003,78 +1085,28 @@ function shareCurrentSlipWhatsApp() {
 }
 
 // ============================================================
-// 7. TAB 2: CLASSIFICA SCOMMETTITORI & SCHEDINE
+// 8. TAB 2: CLASSIFICA SCOMMETTITORI & SCHEDINE
 // ============================================================
-function settleSlipStatus(slipId, newStatus) {
-  const slips = getBetSlips();
-  const slip = slips.find(s => s.id === slipId);
-  if (!slip || slip.status !== "open") return;
-
-  const users = getUsers();
-  const user = users.find(u => u.id === slip.userId);
-
-  slip.status = newStatus;
-  if (newStatus === "won") {
-    if (user) {
-      user.credits += slip.potentialPayout;
-      user.wins = (user.wins || 0) + 1;
-      user.totalWon = (user.totalWon || 0) + slip.potentialPayout;
-    }
-    showToast(`🏆 Schedina VINTA! +${slip.potentialPayout} Crediti a ${esc(slip.userName)}!`);
-  } else if (newStatus === "lost") {
-    if (user) {
-      user.losses = (user.losses || 0) + 1;
-    }
-    showToast(`❌ Schedina segnata come persa.`);
-  }
-
-  saveBetSlips(slips);
-  saveUsers(users);
-  renderAuthHeader();
-  renderLeaderboardTab();
-}
-
-function giveBonusCredits(userId, amount = 50) {
-  const users = getUsers();
-  const u = users.find(x => x.id === userId);
-  if (!u) return;
-  u.credits += amount;
-  saveUsers(users);
-  renderAuthHeader();
-  renderLeaderboardTab();
-  showToast(`🪙 +${amount} Crediti assegnati a <strong>${esc(u.name)}</strong>!`);
-}
-
 function renderLeaderboardTab() {
   const users = getUsers();
   const sorted = [...users].sort((a, b) => b.credits - a.credits);
   const lbBody = document.getElementById("bettorsLeaderboardBody");
   if (lbBody) {
-    if (!sorted.length) {
-      lbBody.innerHTML = `
+    lbBody.innerHTML = sorted.map((u, idx) => {
+      const medal = idx === 0 ? "🥇 1°" : idx === 1 ? "🥈 2°" : idx === 2 ? "🥉 3°" : `${idx + 1}°`;
+      const net = u.credits - STARTING_CREDITS;
+      const netStr = net > 0 ? `+${net}` : `${net}`;
+      return `
         <tr>
-          <td colspan="6" style="text-align:center;padding:24px;color:var(--text-muted);">
-            Nessuno scommettitore ancora registrato. Clicca su <strong>Accedi e Gioca</strong> per entrare in classifica con 100 Crediti!
-          </td>
+          <td style="font-weight:900;font-size:1rem;">${medal}</td>
+          <td><strong>👤 ${esc(u.name)}</strong></td>
+          <td style="color:var(--gold);font-weight:900;font-size:1.05rem;">${u.credits} Crediti 🪙</td>
+          <td style="color:${net >= 0 ? '#34d399' : '#f87171'};font-weight:800;">${netStr}</td>
+          <td style="color:#34d399;font-weight:700;">${u.wins || 0}</td>
+          <td style="color:#f87171;font-weight:700;">${u.losses || 0}</td>
         </tr>
       `;
-    } else {
-      lbBody.innerHTML = sorted.map((u, idx) => {
-        const medal = idx === 0 ? "🥇 1°" : idx === 1 ? "🥈 2°" : idx === 2 ? "🥉 3°" : `${idx + 1}°`;
-        const net = u.credits - STARTING_CREDITS;
-        const netStr = net > 0 ? `+${net}` : `${net}`;
-        return `
-          <tr>
-            <td style="font-weight:900;font-size:1rem;">${medal}</td>
-            <td><strong>👤 ${esc(u.name)}</strong></td>
-            <td style="color:var(--gold);font-weight:900;font-size:1.05rem;">${u.credits} Crediti 🪙</td>
-            <td style="color:${net >= 0 ? '#34d399' : '#f87171'};font-weight:800;">${netStr}</td>
-            <td style="color:#34d399;font-weight:700;">${u.wins || 0}</td>
-            <td style="color:#f87171;font-weight:700;">${u.losses || 0}</td>
-          </tr>
-        `;
-      }).join("");
-    }
+    }).join("");
   }
 
   const slips = getBetSlips();
@@ -1082,13 +1114,13 @@ function renderLeaderboardTab() {
   if (!slipsBox) return;
 
   if (!slips.length) {
-    slipsBox.innerHTML = `<p class="panel-sub">Nessuna schedina ancora giocata in questa stagione. Fai il login e punta i tuoi 100 Crediti!</p>`;
+    slipsBox.innerHTML = `<p class="panel-sub">Nessuna schedina ancora giocata. Fai il login e piazza la tua giocata prima del fischio d'inizio!</p>`;
     return;
   }
 
   slipsBox.innerHTML = slips.map(s => {
     const statusBadge = s.status === "open"
-      ? `<span class="badge badge-open">⏳ IN CORSO</span>`
+      ? `<span class="badge badge-open">✅ CONVALIDATA PRIMA DEL FISCHIO</span>`
       : s.status === "won"
         ? `<span class="badge badge-won">🏆 VINTA (+${s.potentialPayout} Cr.)</span>`
         : `<span class="badge badge-lost">❌ PERSA (-${s.stake} Cr.)</span>`;
@@ -1098,14 +1130,10 @@ function renderLeaderboardTab() {
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
           <div>
             <strong>👤 ${esc(s.userName)}</strong>
-            <span class="panel-sub" style="margin-left:8px;">🕒 ${esc(s.createdAt)}</span>
+            <span class="panel-sub" style="margin-left:8px;">🕒 Piazzata il ${esc(s.createdAt)}</span>
           </div>
           <div style="display:flex;align-items:center;gap:8px;">
             ${statusBadge}
-            ${s.status === "open" ? `
-              <button type="button" class="btn btn-sm" style="background:#10b981;color:#052e16;padding:4px 10px;" onclick="settleSlipStatus('${esc(s.id)}', 'won')">✅ Vinta</button>
-              <button type="button" class="btn btn-sm" style="background:#ef4444;color:#fff;padding:4px 10px;" onclick="settleSlipStatus('${esc(s.id)}', 'lost')">❌ Persa</button>
-            ` : ""}
           </div>
         </div>
         <div style="font-size:0.84rem;color:#cbd5e1;margin-bottom:8px;">
@@ -1121,13 +1149,12 @@ function renderLeaderboardTab() {
 }
 
 // ============================================================
-// 8. TAB 3: ROSA NUOVA STAGIONE, GIRONE 6 & REGISTRO PRESENZE
+// 9. TAB 3: CLASSIFICA PROVVISORIA, CALENDARIO & STATISTICHE ROSA
 // ============================================================
 function renderRosterAndPresenzeTab() {
   const playerStats = computeNewSeasonPlayerStats();
-  const matches = getSeasonMatches();
 
-  // 0. Tabella Girone 6 C.R. Sardegna
+  // 1. Classifica Provvisoria delle Squadre
   const g6Body = document.getElementById("girone6StandingsBody");
   if (g6Body) {
     const standings = computeGirone6Table();
@@ -1139,7 +1166,7 @@ function renderRosterAndPresenzeTab() {
           <td><strong>${i + 1}</strong></td>
           <td>
             <strong>${esc(t.name)}</strong>
-            ${isOpp ? `<span class="badge badge-gk" style="margin-left:6px;">LA NOSTRA SQUADRA</span>` : ""}
+            ${isOpp ? `<span class="badge badge-gk" style="margin-left:6px;">OPPIDUM</span>` : ""}
           </td>
           <td style="font-weight:900;color:var(--gold);">${t.pts}</td>
           <td>${t.played}</td>
@@ -1154,16 +1181,76 @@ function renderRosterAndPresenzeTab() {
     }).join("");
   }
 
-  // 1. Griglia Rosa Ufficiale Nuova Stagione (19 giocatori)
+  // 2. Calendario Campionato (adesso in attesa di pubblicazione, pronto per le 18 giornate)
+  const calContainer = document.getElementById("seasonCalendarContainer");
+  if (calContainer) {
+    const cal = HISTORICAL_AI_REFERENCE.officialCalendar || [];
+    if (!cal.length) {
+      calContainer.innerHTML = `
+        <div class="market-block" style="text-align:center;padding:24px 16px;">
+          <div style="font-size:2rem;margin-bottom:8px;">🗓️</div>
+          <h4 style="font-family:'Space Grotesk',sans-serif;font-size:1.1rem;margin-bottom:6px;">
+            Calendario Ufficiale in fase di pubblicazione
+          </h4>
+          <p class="panel-sub" style="max-width:560px;margin:0 auto 16px;">
+            Non appena la federazione pubblicherà il calendario ufficiale delle 18 giornate (Andata e Ritorno), tutte le date e gli orari del fischio d'inizio compariranno in questa sezione.
+          </p>
+          <div class="odds-grid" style="max-width:780px;margin:0 auto;">
+            <div class="kpi-box" style="text-align:center;">
+              <div class="kpi-val" style="font-size:1.15rem;">1ª - 9ª Giornata</div>
+              <div class="kpi-lbl">Girone d'Andata · In attesa di date</div>
+            </div>
+            <div class="kpi-box" style="text-align:center;">
+              <div class="kpi-val" style="font-size:1.15rem;">10ª - 18ª Giornata</div>
+              <div class="kpi-lbl">Girone di Ritorno · In attesa di date</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+  }
+
+  // 3. Tabella Completa Statistiche Giocatori + Schede Giocatori
+  const referenceOdds = generateAiOddsForMatch("Promogest Quartu SE", true, 1.15, getAllRosterIds());
+  const scorerMap = new Map(referenceOdds.scorerMarkets.map(s => [s.playerId, s]));
+
+  const statsTableBody = document.getElementById("rosterStatsTableBody");
+  if (statsTableBody) {
+    statsTableBody.innerHTML = playerStats.map((p, idx) => {
+      const sc = scorerMap.get(p.id);
+      const totalApps = p.histApps + p.newSeasonApps;
+      const totalGoals = p.histGoals + p.newSeasonGoals;
+      const avgGoals = totalApps > 0 ? (totalGoals / totalApps).toFixed(2) : "0.00";
+      const baseOddStr = p.isGk ? "Quota Rigore @2.75" : (sc ? `@${sc.odd1Plus.toFixed(2)}` : "—");
+
+      return `
+        <tr>
+          <td><strong>${idx + 1}</strong></td>
+          <td>
+            <strong>${esc(p.name)}</strong>
+            ${p.isGk ? `<span class="badge badge-gk" style="margin-left:6px;">GK</span>` : ""}
+          </td>
+          <td>${esc(p.role)}</td>
+          <td style="font-weight:700;color:var(--oppidum-sky);">${p.newSeasonApps}</td>
+          <td style="font-weight:800;color:var(--gold);">${p.isGk ? "—" : p.newSeasonGoals}</td>
+          <td>${p.isGk ? "Portiere" : `${avgGoals} gol/gara`}</td>
+          <td style="color:var(--text-muted);font-size:0.8rem;">
+            ${p.isGk ? `${p.histApps} pres. storiche` : `${p.histGoals} gol / ${p.histApps} pres.`}
+          </td>
+          <td style="font-weight:800;color:var(--gold);">${baseOddStr}</td>
+        </tr>
+      `;
+    }).join("");
+  }
+
   const rosterGrid = document.getElementById("rosterCardsGrid");
   if (rosterGrid) {
     rosterGrid.innerHTML = playerStats.map(p => {
+      const sc = scorerMap.get(p.id);
       const cardClass = p.isGk ? "gk-card" : "";
       const roleBadge = p.isGk
         ? `<span class="badge badge-gk">🧤 PORTIERE</span>`
-        : (p.id === "olla"
-          ? `<span class="badge badge-active">🆕 NUOVO INNESTO</span>`
-          : `<span class="badge badge-active">🤽 ROSA ATTUALE</span>`);
+        : `<span class="badge badge-active">🤽 ${esc(p.role.toUpperCase())}</span>`;
 
       return `
         <div class="player-card ${cardClass}">
@@ -1171,400 +1258,23 @@ function renderRosterAndPresenzeTab() {
             <strong style="font-size:1.05rem;">${esc(p.name)}</strong>
             ${roleBadge}
           </div>
-          <div class="panel-sub">${esc(p.role)} · ${esc(p.note)}</div>
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;padding-top:8px;border-top:1px solid var(--border);font-size:0.82rem;">
-            <span>Presenze Stagione: <strong style="color:var(--oppidum-sky);font-size:0.95rem;">${p.newSeasonApps}</strong></span>
+          <div class="panel-sub">
             ${p.isGk
-              ? `<span style="color:var(--gold);font-weight:800;">Parate / Porta</span>`
-              : `<span>Gol Stagione: <strong style="color:var(--gold);font-size:0.95rem;">${p.newSeasonGoals}</strong></span>`
+              ? `Presenze stagionali: ${p.newSeasonApps} · Storico: ${p.histApps} gare`
+              : `Stagione: ${p.newSeasonGoals} gol (${p.newSeasonApps} pres.) · Storico: ${p.histGoals} gol`
+            }
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;padding-top:8px;border-top:1px solid var(--border);font-size:0.82rem;">
+            <span>Presenze: <strong style="color:var(--oppidum-sky);">${p.newSeasonApps}</strong></span>
+            ${p.isGk
+              ? `<span style="color:var(--gold);font-weight:800;">Para Rigore @2.75</span>`
+              : `<span>Quota Gol AI: <strong style="color:var(--gold);font-size:0.95rem;">@${sc ? sc.odd1Plus.toFixed(2) : "—"}</strong></span>`
             }
           </div>
         </div>
       `;
     }).join("");
   }
-
-  // 2. Matrice Presenze & Gol per Partita della Nuova Stagione
-  const headEl = document.getElementById("presenzeMatrixHead");
-  const bodyEl = document.getElementById("presenzeMatrixBody");
-  if (!headEl || !bodyEl) return;
-
-  headEl.innerHTML = `
-    <tr>
-      <th>GIOCATORE</th>
-      <th>RUOLO</th>
-      ${matches.map((m, idx) => `
-        <th title="${esc(m.title)}: vs ${esc(m.opponent)} (${esc(m.date)})">
-          ${esc(m.opponent.split(" ")[0])}
-          <div style="font-size:0.65rem;color:${m.status === 'settled' ? '#34d399' : 'var(--gold)'};">
-            ${m.status === "settled" ? `${m.scoreUs}-${m.scoreThem}` : "Conv."}
-          </div>
-        </th>
-      `).join("")}
-      <th class="total-col">PRES. GARE</th>
-      <th class="total-col">GOL</th>
-    </tr>
-  `;
-
-  bodyEl.innerHTML = playerStats.map(p => {
-    return `
-      <tr>
-        <td><strong>${esc(p.name)}</strong></td>
-        <td style="font-size:0.75rem;color:var(--text-muted);">${esc(p.role)}</td>
-        ${matches.map(m => {
-          const isPresent = (m.presentPlayerIds || []).includes(p.id);
-          const goals = Number((m.playerGoals || {})[p.id] || 0);
-          return `
-            <td>
-              <label style="display:inline-flex;align-items:center;gap:4px;cursor:pointer;" title="Spunta se ${esc(p.name)} ha giocato / è presente contro ${esc(m.opponent)}">
-                <input type="checkbox" ${isPresent ? "checked" : ""}
-                  onchange="togglePlayerPresenceInMatch('${esc(m.id)}', '${esc(p.id)}', this.checked)" />
-                ${!p.isGk && isPresent ? `
-                  <input type="number" min="0" max="15" value="${goals}"
-                    style="width:42px;padding:2px 4px;font-size:0.75rem;text-align:center;"
-                    title="Gol segnati da ${esc(p.name)}"
-                    onchange="updatePlayerGoalsInMatch('${esc(m.id)}', '${esc(p.id)}', this.value)" />
-                ` : `<span style="font-size:0.7rem;color:var(--text-muted);">${isPresent ? "Sì" : "No"}</span>`}
-              </label>
-            </td>
-          `;
-        }).join("")}
-        <td class="total-col">${p.newSeasonApps}</td>
-        <td class="total-col">${p.newSeasonGoals}</td>
-      </tr>
-    `;
-  }).join("");
-}
-
-function togglePlayerPresenceInMatch(matchId, playerId, isPresent) {
-  const matches = getSeasonMatches();
-  const m = matches.find(x => x.id === matchId);
-  if (!m) return;
-
-  const set = new Set(m.presentPlayerIds || []);
-  if (isPresent) set.add(playerId);
-  else {
-    set.delete(playerId);
-    if (m.playerGoals) delete m.playerGoals[playerId];
-  }
-  m.presentPlayerIds = Array.from(set);
-  m.analysis = generateAiOddsForMatch(m.opponent, m.isHome, m.boostOppidum || 1.15, m.presentPlayerIds);
-
-  saveSeasonMatches(matches);
-  renderRosterAndPresenzeTab();
-  renderBettingTab();
-  showToast(`✅ Presenze aggiornate per <strong>vs ${esc(m.opponent)}</strong>!`);
-}
-
-function updatePlayerGoalsInMatch(matchId, playerId, goalsVal) {
-  const matches = getSeasonMatches();
-  const m = matches.find(x => x.id === matchId);
-  if (!m) return;
-
-  if (!m.playerGoals) m.playerGoals = {};
-  m.playerGoals[playerId] = Math.max(0, parseInt(goalsVal, 10) || 0);
-  saveSeasonMatches(matches);
-  renderRosterAndPresenzeTab();
-}
-
-// ============================================================
-// 9. TAB 4: CREA PARTITA, GESTISCI QUOTE AI E REFERTA RISULTATO
-// ============================================================
-function renderOracleTab() {
-  const matches = getSeasonMatches();
-  const activeMatch = matches.find(m => m.id === appState.selectedMatchId) || matches[0];
-
-  const listEl = document.getElementById("oracleMatchesList");
-  if (listEl) {
-    listEl.innerHTML = matches.map(m => `
-      <div class="market-block" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
-        <div>
-          <div style="font-weight:800;font-size:1rem;">
-            ${esc(m.title)} — ${m.isHome ? "🏠 OPPIDUM vs " + esc(m.opponent) : "✈️ " + esc(m.opponent) + " vs OPPIDUM"}
-            ${m.status === "settled" ? `<span class="badge badge-won" style="margin-left:6px;">FINALE: ${m.scoreUs}-${m.scoreThem}</span>` : `<span class="badge badge-open" style="margin-left:6px;">QUOTE APERTE</span>`}
-          </div>
-          <div class="panel-sub">
-            📅 ${esc(m.date)} · Presenti: <strong>${(m.presentPlayerIds || []).length}/19</strong> · Quote 1X2: <strong>${m.analysis.mainMarkets.odd1.toFixed(2)} / ${m.analysis.mainMarkets.oddX.toFixed(2)} / ${m.analysis.mainMarkets.odd2.toFixed(2)}</strong>
-          </div>
-        </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;">
-          <button type="button" class="btn btn-navy btn-sm" onclick="selectMatchForCustomOdds('${esc(m.id)}')">✏️ Modifica Data / Quote / Risultato</button>
-          <button type="button" class="btn btn-whatsapp btn-sm" onclick="shareMatchOddsWhatsApp('${esc(m.id)}')">📲 Condividi Quote</button>
-          <button type="button" class="btn btn-outline btn-sm" onclick="deleteSeasonMatch('${esc(m.id)}')">🗑️</button>
-        </div>
-      </div>
-    `).join("");
-  }
-
-  if (activeMatch) {
-    renderCustomOddsEditor(activeMatch);
-  }
-}
-
-function createNewAiMatch(e) {
-  e.preventDefault();
-  const opponentSel = document.getElementById("newMatchOpponent").value;
-  const customOpp = document.getElementById("newMatchCustomOpponent").value.trim();
-  const opponent = opponentSel === "CUSTOM" ? (customOpp || "Avversario Serie C") : opponentSel;
-  const isHome = document.getElementById("newMatchVenue").value === "home";
-  const dateStr = document.getElementById("newMatchDate").value.trim() || "Data da definire (Girone 6)";
-  const titleStr = document.getElementById("newMatchComp").value.trim() || "Girone 6 — C.R. Sardegna";
-  const boost = parseFloat(document.getElementById("newMatchBoost").value) || 1.15;
-
-  const allIds = getAllRosterIds();
-  const analysis = generateAiOddsForMatch(opponent, isHome, boost, allIds);
-  const matches = getSeasonMatches();
-
-  const newMatch = {
-    id: uid("g6_match"),
-    title: titleStr,
-    date: dateStr,
-    opponent,
-    isHome,
-    boostOppidum: boost,
-    status: "open",
-    scoreUs: null,
-    scoreThem: null,
-    presentPlayerIds: [...allIds],
-    playerGoals: {},
-    analysis
-  };
-
-  matches.unshift(newMatch);
-  saveSeasonMatches(matches);
-  appState.selectedMatchId = newMatch.id;
-
-  renderBettingTab();
-  renderOracleTab();
-  renderRosterAndPresenzeTab();
-  showToast(`🤖 Partita <strong>OPPIDUM vs ${esc(opponent)}</strong> creata e quote calcolate dall'AI!`);
-}
-
-function selectMatchForCustomOdds(matchId) {
-  appState.selectedMatchId = matchId;
-  renderOracleTab();
-  renderBettingTab();
-  document.getElementById("customOddsEditorSection")?.scrollIntoView({ behavior: "smooth" });
-}
-
-function deleteSeasonMatch(matchId) {
-  const matches = getSeasonMatches().filter(m => m.id !== matchId);
-  saveSeasonMatches(matches);
-  if (appState.selectedMatchId === matchId) {
-    appState.selectedMatchId = matches[0]?.id || null;
-  }
-  renderBettingTab();
-  renderOracleTab();
-  renderRosterAndPresenzeTab();
-  showToast("🗑️ Partita rimossa.");
-}
-
-function renderCustomOddsEditor(match) {
-  const container = document.getElementById("customOddsEditorBody");
-  if (!container) return;
-  const mm = match.analysis.mainMarkets;
-
-  container.innerHTML = `
-    <div style="margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
-      <div>
-        <span class="badge badge-gk">${esc(match.title)}</span>
-        <strong style="margin-left:8px;font-size:1.05rem;">
-          ${match.isHome ? "OPPIDUM SPORT CAGLIARI vs " + esc(match.opponent) : esc(match.opponent) + " vs OPPIDUM SPORT CAGLIARI"}
-        </strong>
-      </div>
-      <button type="button" class="btn btn-outline btn-sm" onclick="recalculateAiForMatch('${esc(match.id)}')">
-        🔄 Ricalcola Quote con AI
-      </button>
-    </div>
-
-    <div class="form-grid">
-      <div class="field">
-        <label>Data / Giornata (Appena esce il calendario)</label>
-        <input type="text" id="editMatchDate" value="${esc(match.date)}" />
-      </div>
-      <div class="field">
-        <label>Casa / Trasferta</label>
-        <select id="editMatchIsHome">
-          <option value="home" ${match.isHome ? "selected" : ""}>🏠 In Casa (Piscina Terramaini)</option>
-          <option value="away" ${!match.isHome ? "selected" : ""}>✈️ In Trasferta</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>Quota 1 (${match.isHome ? "Oppidum" : esc(match.opponent)})</label>
-        <input type="number" step="0.05" id="editOdd1" value="${mm.odd1}" />
-      </div>
-      <div class="field">
-        <label>Quota X (Pareggio)</label>
-        <input type="number" step="0.05" id="editOddX" value="${mm.oddX}" />
-      </div>
-      <div class="field">
-        <label>Quota 2 (${match.isHome ? esc(match.opponent) : "Oppidum"})</label>
-        <input type="number" step="0.05" id="editOdd2" value="${mm.odd2}" />
-      </div>
-      <div class="field">
-        <label>Linea Over/Under Gol Totali</label>
-        <input type="number" step="0.5" id="editTotalLine" value="${mm.totalLine}" />
-      </div>
-      <div class="field">
-        <label>Linea Over/Under Gol Oppidum</label>
-        <input type="number" step="0.5" id="editOppidumLine" value="${mm.oppidumLine}" />
-      </div>
-    </div>
-    <button type="button" class="btn btn-primary btn-sm" onclick="saveManualMainOdds('${esc(match.id)}')">
-      💾 Salva Data &amp; Quote Modificate
-    </button>
-
-    <hr style="border:none;border-top:1px solid var(--border);margin:18px 0;" />
-
-    <h4 style="margin-bottom:10px;font-size:0.95rem;">➕ Aggiungi Quota Goliardica / Speciale per questa Partita</h4>
-    <div class="form-grid">
-      <div class="field">
-        <label>Titolo Scommessa</label>
-        <input type="text" id="customGoliardicLabel" placeholder="es. 'Olla segna una doppietta all'esordio'" />
-      </div>
-      <div class="field">
-        <label>Dettaglio</label>
-        <input type="text" id="customGoliardicSub" placeholder="es. 'Quota speciale spogliatoio'" />
-      </div>
-      <div class="field">
-        <label>Quota</label>
-        <input type="number" step="0.10" id="customGoliardicOdd" value="3.50" />
-      </div>
-    </div>
-    <button type="button" class="btn btn-gold btn-sm" onclick="addCustomGoliardicOdd('${esc(match.id)}')">
-      🍺 Aggiungi Quota al Palinsesto
-    </button>
-
-    <hr style="border:none;border-top:1px solid var(--border);margin:18px 0;" />
-
-    <h4 style="margin-bottom:10px;font-size:0.95rem;">🏁 Referta Risultato Finale Partita (Aggiorna Classifica Girone 6 &amp; Presenze)</h4>
-    <div class="form-grid">
-      <div class="field">
-        <label>Gol OPPIDUM SPORT CAGLIARI</label>
-        <input type="number" min="0" max="40" id="settleScoreUs" value="${match.scoreUs ?? 10}" />
-      </div>
-      <div class="field">
-        <label>Gol ${esc(match.opponent)}</label>
-        <input type="number" min="0" max="40" id="settleScoreThem" value="${match.scoreThem ?? 9}" />
-      </div>
-    </div>
-    <button type="button" class="btn btn-navy btn-sm" onclick="recordMatchResult('${esc(match.id)}')">
-      ✅ Salva Risultato Ufficiale &amp; Aggiorna Classifica Girone 6
-    </button>
-  `;
-}
-
-function saveManualMainOdds(matchId) {
-  const matches = getSeasonMatches();
-  const m = matches.find(x => x.id === matchId);
-  if (!m) return;
-
-  const newDate = document.getElementById("editMatchDate")?.value.trim();
-  const newIsHome = document.getElementById("editMatchIsHome")?.value === "home";
-  if (newDate) m.date = newDate;
-  m.isHome = newIsHome;
-
-  m.analysis.mainMarkets.odd1 = parseFloat(document.getElementById("editOdd1").value) || m.analysis.mainMarkets.odd1;
-  m.analysis.mainMarkets.oddX = parseFloat(document.getElementById("editOddX").value) || m.analysis.mainMarkets.oddX;
-  m.analysis.mainMarkets.odd2 = parseFloat(document.getElementById("editOdd2").value) || m.analysis.mainMarkets.odd2;
-  m.analysis.mainMarkets.totalLine = parseFloat(document.getElementById("editTotalLine").value) || m.analysis.mainMarkets.totalLine;
-  m.analysis.mainMarkets.oppidumLine = parseFloat(document.getElementById("editOppidumLine").value) || m.analysis.mainMarkets.oppidumLine;
-
-  saveSeasonMatches(matches);
-  renderBettingTab();
-  renderOracleTab();
-  showToast("✅ Data e quote aggiornate!");
-}
-
-function recalculateAiForMatch(matchId) {
-  const matches = getSeasonMatches();
-  const m = matches.find(x => x.id === matchId);
-  if (!m) return;
-  const newIsHome = document.getElementById("editMatchIsHome")
-    ? document.getElementById("editMatchIsHome").value === "home"
-    : m.isHome;
-  m.isHome = newIsHome;
-  m.analysis = generateAiOddsForMatch(m.opponent, m.isHome, m.boostOppidum || 1.15, m.presentPlayerIds);
-  saveSeasonMatches(matches);
-  renderBettingTab();
-  renderOracleTab();
-  showToast("🤖 Quote ricalcolate dall'AI!");
-}
-
-function addCustomGoliardicOdd(matchId) {
-  const label = document.getElementById("customGoliardicLabel")?.value.trim();
-  const sub = document.getElementById("customGoliardicSub")?.value.trim() || "Quota speciale spogliatoio";
-  const odd = parseFloat(document.getElementById("customGoliardicOdd")?.value) || 2.5;
-  if (!label) {
-    showToast("⚠️ Inserisci il testo della scommessa!");
-    return;
-  }
-
-  const matches = getSeasonMatches();
-  const m = matches.find(x => x.id === matchId);
-  if (!m) return;
-
-  m.analysis.goliardicMarkets.unshift({
-    id: uid("gol_custom"),
-    label: `🔥 ${label}`,
-    sub,
-    odd: Number(odd.toFixed(2))
-  });
-
-  saveSeasonMatches(matches);
-  renderBettingTab();
-  renderOracleTab();
-  showToast(`🍺 Nuova quota "${esc(label)}" (@${odd.toFixed(2)}) aggiunta!`);
-}
-
-function recordMatchResult(matchId) {
-  const matches = getSeasonMatches();
-  const m = matches.find(x => x.id === matchId);
-  if (!m) return;
-
-  const scoreUs = parseInt(document.getElementById("settleScoreUs")?.value, 10) || 0;
-  const scoreThem = parseInt(document.getElementById("settleScoreThem")?.value, 10) || 0;
-
-  m.scoreUs = scoreUs;
-  m.scoreThem = scoreThem;
-  m.status = "settled";
-
-  saveSeasonMatches(matches);
-  renderBettingTab();
-  renderOracleTab();
-  renderRosterAndPresenzeTab();
-  showToast(`🏁 Risultato <strong>OPPIDUM ${scoreUs} - ${scoreThem} ${esc(m.opponent)}</strong> registrato! Classifica Girone 6 e Presenze aggiornate.`);
-}
-
-function shareMatchOddsWhatsApp(matchId) {
-  const matches = getSeasonMatches();
-  const m = matches.find(x => x.id === matchId);
-  if (!m) return;
-  const an = m.analysis;
-  const mm = an.mainMarkets;
-  const topScorers = an.scorerMarkets.slice(0, 6);
-
-  const text = [
-    `🤽‍♂️ *OPPIDUM BET — QUOTE GIRONE 6 (C.R. SARDEGNA)* 🔴🔵`,
-    `🏆 *${m.isHome ? "OPPIDUM CAGLIARI vs " + m.opponent : m.opponent + " vs OPPIDUM CAGLIARI"}*`,
-    `📅 ${m.date}`,
-    ``,
-    `📊 *ESITO 1X2:*`,
-    `• 1: *${mm.odd1.toFixed(2)}* | X: *${mm.oddX.toFixed(2)}* | 2: *${mm.odd2.toFixed(2)}*`,
-    `• Over/Under ${mm.totalLine} gol: *1.85*`,
-    `• Oppidum Over ${mm.oppidumLine} gol: *${mm.oddOverOppidum.toFixed(2)}*`,
-    ``,
-    `🎯 *QUOTE MARCATORI OPPIDUM (1+ Gol):*`,
-    ...topScorers.map(s => `• ${s.name}: *${s.odd1Plus.toFixed(2)}*`),
-    ``,
-    `🧤 *SPECIALE PORTIERI (ATZENI & FARET):*`,
-    `• Para un rigore (5m): *2.75*`,
-    `• Porta inviolata in un quarto: *3.40*`,
-    ``,
-    `👉 Accedi con il tuo nome (100 Crediti iniziali) su: https://stilippo.github.io/oppidum-betting/`
-  ].join("\n");
-
-  window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
 }
 
 // ---------- INIZIALIZZAZIONE ----------
@@ -1574,5 +1284,4 @@ window.addEventListener("DOMContentLoaded", () => {
   renderBetSlip();
   renderLeaderboardTab();
   renderRosterAndPresenzeTab();
-  renderOracleTab();
 });

@@ -31,7 +31,7 @@
           🏆 Classifica Scommettitori
         </button>
         <button type="button" class="nav-tab" data-tab="roster" onclick="switchTab('roster')">
-          🤽 Girone 6 &amp; Rosa
+          🤽 Girone, Calendario &amp; Rosa
         </button>
       </nav>
 
@@ -48,7 +48,7 @@
         <h2>Il Campionato di Scommesse Goliardiche dell'<span>Oppidum Cagliari</span></h2>
         <p>
           Entra con il tuo profilo, ricevi subito <strong>100 Crediti</strong> e sfida tutta la squadra sui pronostici della nuova stagione.
-          Quote generate dall'Intelligenza Artificiale per le sfide di campionato, i marcatori e le scommesse speciali da spogliatoio.
+          Le scommesse sono valide esclusivamente <strong>fino al fischio d'inizio</strong> di ciascuna partita.
         </p>
         <div class="hero-actions">
           <button type="button" class="btn btn-gold" onclick="openLoginModal()">
@@ -57,8 +57,8 @@
           <button type="button" class="btn btn-primary" onclick="switchTab('betting')">
             🎯 Vai al Palinsesto
           </button>
-          <button type="button" class="btn btn-outline" onclick="switchTab('leaderboard')">
-            🏆 Vedi la Classifica
+          <button type="button" class="btn btn-outline" onclick="switchTab('roster')">
+            🤽 Girone, Calendario &amp; Rosa
           </button>
         </div>
       </div>
@@ -73,12 +73,12 @@
           <div class="kpi-lbl">10 Squadre · C.R. Sardegna</div>
         </div>
         <div class="kpi-box">
-          <div class="kpi-val">Quote AI</div>
-          <div class="kpi-lbl">Calcolate su statistiche e stato di forma</div>
+          <div class="kpi-val">Stop al Fischio</div>
+          <div class="kpi-lbl">Chiusura automatica ad inizio gara</div>
         </div>
         <div class="kpi-box">
-          <div class="kpi-val">100% Fun</div>
-          <div class="kpi-lbl">Sfida goliardica tra compagni e amici</div>
+          <div class="kpi-val">Quote AI</div>
+          <div class="kpi-lbl">Calcolate su statistiche e stato di forma</div>
         </div>
       </div>
     </div>
@@ -96,8 +96,10 @@
         <div class="panel-card">
           <div class="panel-header">
             <div>
-              <h3 class="panel-title">🎯 Palinsesto Partite — Serie C Girone 6</h3>
-              <p class="panel-sub">Seleziona un incontro dal menu qui sotto e clicca sulle quote per comporre la tua schedina</p>
+              <h3 class="panel-title">🎯 Palinsesto Partite — Serie C</h3>
+              <p class="panel-sub">
+                ⏱️ <strong>Regola Ufficiale:</strong> puoi piazzare le scommesse solo fino al fischio d'inizio della partita. Le giocate successive vengono bloccate automaticamente.
+              </p>
             </div>
           </div>
 
@@ -135,7 +137,7 @@
           <div class="panel-header">
             <div>
               <h3 class="panel-title">🏆 Classifica Generale Scommettitori</h3>
-              <p class="panel-sub">Ogni iscritto parte con 100 Crediti. Piazzando schedine vincenti accumuli punti per il podio finale.</p>
+              <p class="panel-sub">Ogni iscritto parte con 100 Crediti. Valgono solo le schedine piazzate prima del fischio d'inizio.</p>
             </div>
             <button type="button" class="btn btn-gold btn-sm" onclick="openLoginModal()">
               ➕ Accedi / Cambia Giocatore
@@ -162,8 +164,8 @@
         <div class="panel-card">
           <div class="panel-header">
             <div>
-              <h3 class="panel-title">🎫 Storico Schedine Giocate</h3>
-              <p class="panel-sub">Elenco delle schedine piazzate dai giocatori della società.</p>
+              <h3 class="panel-title">🎫 Storico Schedine Convalidate</h3>
+              <p class="panel-sub">Elenco delle schedine registrate entro l'orario di inizio gara.</p>
             </div>
           </div>
           <div id="allSlipsHistoryBox"></div>
@@ -171,15 +173,17 @@
       </section>
 
       <!-- ========================================================
-           TAB 3: GIRONE 6 & ROSA
+           TAB 3: GIRONE 6, CALENDARIO & ROSA CON STATISTICHE
            ======================================================== -->
       <section class="tab-panel" id="tab-roster">
+
+        <!-- 1. CLASSIFICA PROVVISORIA DELLE SQUADRE -->
         <div class="panel-card">
           <div class="panel-header">
             <div>
-              <h3 class="panel-title">🌊 Classifica Serie C — Girone 6 (C.R. Sardegna)</h3>
+              <h3 class="panel-title">🌊 Classifica Provvisoria — Serie C Girone 6 (C.R. Sardegna)</h3>
               <p class="panel-sub">
-                Le 10 squadre partecipanti al campionato di Serie C — Girone 6.
+                Classifica aggiornata delle 10 società partecipanti al Girone 6.
               </p>
             </div>
           </div>
@@ -188,7 +192,7 @@
             <table>
               <thead>
                 <tr>
-                  <th>#</th>
+                  <th>Pos</th>
                   <th>Squadra</th>
                   <th>Pti</th>
                   <th>G</th>
@@ -205,18 +209,52 @@
           </div>
         </div>
 
+        <!-- 2. CALENDARIO CAMPIONATO -->
         <div class="panel-card">
           <div class="panel-header">
             <div>
-              <h3 class="panel-title">🤽 Rosa Oppidum Sport Cagliari</h3>
+              <h3 class="panel-title">📅 Calendario Campionato — Serie C Girone 6</h3>
               <p class="panel-sub">
-                Elenco completo dei giocatori con presenze e reti realizzate nella stagione in corso.
+                Programma delle giornate di andata e ritorno (in attesa della pubblicazione ufficiale FIN).
               </p>
             </div>
           </div>
 
+          <div id="seasonCalendarContainer"></div>
+        </div>
+
+        <!-- 3. TUTTI I GIOCATORI CON LE STATISTICHE -->
+        <div class="panel-card">
+          <div class="panel-header">
+            <div>
+              <h3 class="panel-title">📊 Rosa Completa &amp; Statistiche Giocatori — Oppidum Sport Cagliari</h3>
+              <p class="panel-sub">
+                Tutti i 19 giocatori in rosa con ruolo, presenze stagionali, gol realizzati, media realizzativa e quota base AI.
+              </p>
+            </div>
+          </div>
+
+          <div class="table-wrap" style="margin-bottom:20px;">
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Giocatore</th>
+                  <th>Ruolo</th>
+                  <th>Presenze Stagione</th>
+                  <th>Gol Stagione</th>
+                  <th>Media Gol / Gara</th>
+                  <th>Rif. Storico</th>
+                  <th>Quota Base Gol (AI)</th>
+                </tr>
+              </thead>
+              <tbody id="rosterStatsTableBody"></tbody>
+            </table>
+          </div>
+
           <div class="roster-grid" id="rosterCardsGrid"></div>
         </div>
+
       </section>
 
     </div>
