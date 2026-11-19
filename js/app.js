@@ -1451,8 +1451,45 @@ function renderMarketsForMatch(match) {
 }
 
 // ============================================================
-// 7. SCHEDINA INTERATTIVA (1 SELEZIONE PER GIOCATORE SU GOL / FALLI)
+// 7. SCHEDINA INTERATTIVA + BLOCCO EVENTI INCOMPATIBILI (POPUP)
 // ============================================================
+function openConflictModal(newPickLabel, conflictingPicks, reason) {
+  const modal = document.getElementById("conflictModal");
+  const body = document.getElementById("conflictModalBody");
+  if (!modal || !body) {
+    const names = conflictingPicks.map(p => p.label).join(", ");
+    showToast(`⛔ Non puoi selezionare "${esc(newPickLabel)}": va contro "${esc(names)}".`);
+    return;
+  }
+
+  const listHtml = conflictingPicks.map(p => `
+    <div style="background:rgba(200,16,46,0.18);border:1px solid rgba(200,16,46,0.5);border-radius:8px;padding:8px 10px;margin-top:6px;font-weight:800;color:#fecaca;">
+      ❌ ${esc(p.label)}
+    </div>
+  `).join("");
+
+  body.innerHTML = `
+    <p style="margin-bottom:8px;">
+      Non puoi selezionare <strong style="color:var(--gold);">"${esc(newPickLabel)}"</strong> perché va in contrasto con ${conflictingPicks.length > 1 ? "questi eventi già presenti" : "questo evento già presente"} in schedina:
+    </p>
+    <div style="margin-bottom:12px;">
+      ${listHtml}
+    </div>
+    <p style="font-size:0.82rem;color:#cbd5e1;background:rgba(255,255,255,0.04);border-left:3px solid var(--gold);padding:8px 10px;border-radius:4px;margin-bottom:8px;">
+      ℹ️ ${esc(reason)}
+    </p>
+    <p style="font-size:0.78rem;color:var(--text-muted);margin:0;">
+      Per selezionare questo evento, rimuovi prima dalla schedina ${conflictingPicks.length > 1 ? "gli eventi in conflitto" : "l'evento in conflitto"}.
+    </p>
+  `;
+  modal.style.display = "flex";
+}
+
+function closeConflictModal() {
+  const modal = document.getElementById("conflictModal");
+  if (modal) modal.style.display = "none";
+}
+
 function getExclusiveMarketGroup(marketKey) {
   // 1) Gol di un singolo giocatore (sia 1+/2+/3+ sia Esattamente N Gol): max 1 per giocatore
   let m = marketKey.match(/^SC_EXACT_(.+)_\d+$/);
@@ -1480,6 +1517,183 @@ function getExclusiveMarketGroup(marketKey) {
   return marketKey;
 }
 
+function getGroupConflictReason(groupKey) {
+  if (groupKey.startsWith("PLAYER_GOALS_")) {
+    return "Puoi scegliere una sola giocata sui Gol per lo stesso giocatore nella stessa partita.";
+  }
+  if (groupKey.startsWith("PLAYER_FOULS_")) {
+    return "Puoi scegliere una sola giocata sulle Espulsioni / Falli per lo stesso giocatore nella stessa partita.";
+  }
+  if (groupKey === "MAIN_1X2_DC") {
+    return "Non puoi combinare più esiti finali (1X2 / Doppia Chance) sulla stessa partita.";
+  }
+  if (groupKey === "MATCH_TOTAL_GOALS") {
+    return "Puoi selezionare una sola opzione sui Gol Totali del Match (Over/Under o Gol Esatti).";
+  }
+  if (groupKey === "HOME_TEAM_GOALS") {
+    return "Puoi selezionare una sola opzione sui Gol della Squadra di Casa.";
+  }
+  if (groupKey === "AWAY_TEAM_GOALS") {
+    return "Puoi selezionare una sola opzione sui Gol della Squadra in Trasferta.";
+  }
+  if (groupKey === "MATCH_HANDICAP") {
+    return "Puoi selezionare un solo Handicap per la stessa partita.";
+  }
+  return "Questi due eventi non possono essere selezionati contemporaneamente nella stessa partita.";
+}
+
+function extractPlayerMinGoalFromKey(marketKey) {
+  let m = marketKey.match(/^SC_EXACT_(.+)_(\d+)$/);
+  if (m) return { playerId: m[1], minGoals: parseInt(m[2], 10) };
+  m = marketKey.match(/^SC_(.+)_(\d+)$/);
+  if (m) return { playerId: m[1], minGoals: parseInt(m[2], 10) };
+  if (marketKey === "gk_atzeni_goal") return { playerId: "atzeni", minGoals: 1 };
+  if (marketKey === "gk_faret_goal") return { playerId: "faret", minGoals: 1 };
+  if (marketKey === "gol_olla_esordio") return { playerId: "olla", minGoals: 1 };
+  if (marketKey === "gol_pittotti_gol") return { playerId: "pittotti", minGoals: 1 };
+  if (marketKey === "gol_melis_lob") return { playerId: "melis", minGoals: 1 };
+  return null;
+}
+
+function buildScorelinePredicate(marketKey) {
+  if (marketKey === "1X2_1") return (h, a) => h > a;
+  if (marketKey === "1X2_X") return (h, a) => h === a;
+  if (marketKey === "1X2_2") return (h, a) => h < a;
+  if (marketKey === "DC_1X") return (h, a) => h >= a;
+  if (marketKey === "DC_X2") return (h, a) => h <= a;
+  if (marketKey === "DC_12") return (h, a) => h !== a;
+
+  let m;
+  if ((m = marketKey.match(/^OU_MATCH_OVER_([\d.]+)$/))) {
+    const line = parseFloat(m[1]);
+    return (h, a) => (h + a) > line;
+  }
+  if ((m = marketKey.match(/^OU_MATCH_UNDER_([\d.]+)$/))) {
+    const line = parseFloat(m[1]);
+    return (h, a) => (h + a) < line;
+  }
+  if ((m = marketKey.match(/^OU_HOME_OVER_([\d.]+)$/))) {
+    const line = parseFloat(m[1]);
+    return (h) => h > line;
+  }
+  if ((m = marketKey.match(/^OU_HOME_UNDER_([\d.]+)$/))) {
+    const line = parseFloat(m[1]);
+    return (h) => h < line;
+  }
+  if ((m = marketKey.match(/^OU_AWAY_OVER_([\d.]+)$/))) {
+    const line = parseFloat(m[1]);
+    return (_, a) => a > line;
+  }
+  if ((m = marketKey.match(/^OU_AWAY_UNDER_([\d.]+)$/))) {
+    const line = parseFloat(m[1]);
+    return (_, a) => a < line;
+  }
+  if ((m = marketKey.match(/^EXACT_GOALS_MATCH_(\d+)$/))) {
+    const k = parseInt(m[1], 10);
+    return (h, a) => (h + a) === k;
+  }
+  if ((m = marketKey.match(/^EXACT_GOALS_HOME_(\d+)$/))) {
+    const k = parseInt(m[1], 10);
+    return (h) => h === k;
+  }
+  if ((m = marketKey.match(/^EXACT_GOALS_AWAY_(\d+)$/))) {
+    const k = parseInt(m[1], 10);
+    return (_, a) => a === k;
+  }
+  if ((m = marketKey.match(/^HCP_HOME_(-?[\d.]+)$/))) {
+    const line = parseFloat(m[1]);
+    return (h, a) => (h + line) > a;
+  }
+  if ((m = marketKey.match(/^HCP_AWAY_(-?[\d.]+)$/))) {
+    const line = parseFloat(m[1]);
+    return (h, a) => (a + line) > h;
+  }
+  return null;
+}
+
+// Verifica matematicamente se esiste almeno un punteggio finale (H, A) compatibile con TUTTE le selezioni
+function isScorelineSetFeasible(picks, isOppidumHome) {
+  const predicates = [];
+  const minGoalsByPlayer = {};
+
+  for (const p of picks) {
+    const pred = buildScorelinePredicate(p.marketKey);
+    if (pred) predicates.push(pred);
+    const pg = extractPlayerMinGoalFromKey(p.marketKey);
+    if (pg) {
+      minGoalsByPlayer[pg.playerId] = Math.max(minGoalsByPlayer[pg.playerId] || 0, pg.minGoals);
+    }
+  }
+
+  const totalMinOppidumGoals = Object.values(minGoalsByPlayer).reduce((s, v) => s + v, 0);
+  if (totalMinOppidumGoals > 0) {
+    predicates.push(isOppidumHome ? ((h) => h >= totalMinOppidumGoals) : ((_, a) => a >= totalMinOppidumGoals));
+  }
+
+  if (!predicates.length) return true;
+
+  for (let h = 0; h <= 55; h++) {
+    for (let a = 0; a <= 55; a++) {
+      let ok = true;
+      for (let i = 0; i < predicates.length; i++) {
+        if (!predicates[i](h, a)) {
+          ok = false;
+          break;
+        }
+      }
+      if (ok) return true;
+    }
+  }
+  return false;
+}
+
+function findPickConflicts(match, existingMatchPicks, newPick) {
+  const isOppidumHome = match ? !!match.isHome : true;
+
+  // 1) Controllo conflitto diretto sullo stesso gruppo di mercato (es. 1X2, stesso giocatore Gol/Falli, stesso Over/Under, Handicap)
+  const newGroup = getExclusiveMarketGroup(newPick.marketKey);
+  const sameGroupPick = existingMatchPicks.find(p => getExclusiveMarketGroup(p.marketKey) === newGroup);
+  if (sameGroupPick) {
+    return {
+      conflicts: [sameGroupPick],
+      reason: getGroupConflictReason(newGroup)
+    };
+  }
+
+  // 2) Controllo incompatibilità matematica diretta a coppie (es. 1 + Handicap Trasferta -1.5, Pareggio + Match Esattamente 19 Gol, ecc.)
+  const directMathConflicts = [];
+  for (const p of existingMatchPicks) {
+    if (!isScorelineSetFeasible([p, newPick], isOppidumHome)) {
+      directMathConflicts.push(p);
+    }
+  }
+  if (directMathConflicts.length > 0) {
+    const hasPlayerGoal = directMathConflicts.some(p => extractPlayerMinGoalFromKey(p.marketKey)) || !!extractPlayerMinGoalFromKey(newPick.marketKey);
+    const reason = hasPlayerGoal
+      ? "I gol richiesti dai marcatori selezionati sono incompatibili con il tetto gol della squadra o del match."
+      : "Questi eventi non possono verificarsi contemporaneamente nella stessa partita (risultati matematicamente incompatibili).";
+    return { conflicts: directMathConflicts, reason };
+  }
+
+  // 3) Controllo incompatibilità matematica combinata (es. Casa Over 10.5 + Trasf. Over 9.5 + Match Under 19.5)
+  if (!isScorelineSetFeasible([...existingMatchPicks, newPick], isOppidumHome)) {
+    let minimal = [...existingMatchPicks];
+    for (let i = minimal.length - 1; i >= 0; i--) {
+      const withoutI = minimal.filter((_, idx) => idx !== i);
+      if (!isScorelineSetFeasible([...withoutI, newPick], isOppidumHome)) {
+        minimal = withoutI;
+      }
+    }
+    const hasPlayerGoal = minimal.some(p => extractPlayerMinGoalFromKey(p.marketKey)) || !!extractPlayerMinGoalFromKey(newPick.marketKey);
+    const reason = hasPlayerGoal
+      ? "La somma minima dei gol dei marcatori selezionati rende impossibile questa combinazione di risultati."
+      : "La combinazione di questi eventi è matematicamente impossibile: non esiste nessun punteggio finale che li soddisfi tutti contemporaneamente.";
+    return { conflicts: minimal, reason };
+  }
+
+  return null;
+}
+
 function toggleBetPick(matchId, matchTitle, marketKey, label, odd) {
   const matches = getSeasonMatches();
   const match = matches.find(m => m.id === matchId);
@@ -1500,12 +1714,6 @@ function toggleBetPick(matchId, matchTitle, marketKey, label, odd) {
     return;
   }
 
-  // Controlla se esiste già una selezione dello stesso gruppo esclusivo (es. un'altra quota Gol o Falli dello stesso giocatore)
-  const groupKey = getExclusiveMarketGroup(marketKey);
-  const conflictIdx = appState.betSlip.findIndex(
-    i => i.matchId === matchId && getExclusiveMarketGroup(i.marketKey) === groupKey
-  );
-
   const newPick = {
     id: uid("pick"),
     matchId,
@@ -1516,13 +1724,15 @@ function toggleBetPick(matchId, matchTitle, marketKey, label, odd) {
     odd: Number(odd)
   };
 
-  if (conflictIdx >= 0) {
-    // Sostituisce la selezione precedente per quel giocatore / mercato
-    appState.betSlip[conflictIdx] = newPick;
-  } else {
-    appState.betSlip.push(newPick);
+  // Verifica conflitti con tutte le selezioni già presenti nella stessa partita
+  const sameMatchPicks = appState.betSlip.filter(i => i.matchId === matchId);
+  const conflict = findPickConflicts(match, sameMatchPicks, newPick);
+  if (conflict) {
+    openConflictModal(newPick.label, conflict.conflicts, conflict.reason);
+    return;
   }
 
+  appState.betSlip.push(newPick);
   renderBettingTab();
   renderBetSlip();
 }

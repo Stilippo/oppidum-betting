@@ -323,6 +323,22 @@
     </div>
   </div>
 
+  <!-- MODAL POPUP CONFLITTO EVENTI INCOMPATIBILI -->
+  <div class="modal-backdrop" id="conflictModal" onclick="if(event.target===this) closeConflictModal()">
+    <div class="modal-card" style="border-color:var(--oppidum-red);box-shadow:0 20px 60px rgba(200,16,46,0.35);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <h3 style="font-family:'Space Grotesk',sans-serif;font-size:1.18rem;color:#fca5a5;">
+          ⛔ Eventi Incompatibili!
+        </h3>
+        <button type="button" class="bs-remove" onclick="closeConflictModal()" style="font-size:1.2rem;">✕</button>
+      </div>
+      <div id="conflictModalBody" style="font-size:0.88rem;line-height:1.5;color:#e2e8f0;margin-bottom:16px;"></div>
+      <button type="button" class="btn btn-gold btn-block" onclick="closeConflictModal()">
+        Ho capito, chiudi
+      </button>
+    </div>
+  </div>
+
   <!-- TOAST CONTAINER -->
   <div id="toastContainer"></div>
 
